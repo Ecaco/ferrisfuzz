@@ -1,6 +1,10 @@
-pub fn levenshtein_distance(str_1: String, str_2: String) -> usize {
-    let m = str_1.len();
-    let n = str_2.len();
+pub fn levenshtein_distance(str_1: &str, str_2: &str) -> usize {
+    let chars_1: Vec<char> = str_1.chars().collect();
+    let chars_2: Vec<char> = str_2.chars().collect();
+
+
+    let m = chars_1.len();
+    let n = chars_2.len();
     let row_width = n + 1;
     
     let mut matrix = vec![0; (m + 1) * (n + 1)];
@@ -11,7 +15,6 @@ pub fn levenshtein_distance(str_1: String, str_2: String) -> usize {
     }
 
     for row in 0..=m{
-        let target_row = row;
         matrix[row * row_width] = row;
     }
 
@@ -22,7 +25,7 @@ pub fn levenshtein_distance(str_1: String, str_2: String) -> usize {
         let left_idx    = row * row_width + (col - 1);
         let diagonal_idx = (row - 1) * row_width + (col - 1);
 
-        if str_1.as_bytes()[row - 1] == str_2.as_bytes()[col - 1] {
+        if chars_1[row - 1] == chars_2[col - 1]  {
             matrix[current_idx] = matrix[diagonal_idx]
             }
         else {
@@ -39,14 +42,61 @@ pub fn levenshtein_distance(str_1: String, str_2: String) -> usize {
 
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let string_1 = "Kitten".to_string();
-        let string_2 = "Mitten".to_string();
-        assert_eq!(levenshtein_distance(string_1, string_2), 1)
+    fn test_known_distances() {
+        let cases = [
+            ("", "", 0),
+            ("a", "", 1),
+            ("", "a", 1),
+            ("a", "a", 0),
+            ("a", "b", 1),
+            ("abc", "abc", 0),
+            ("abc", "ab", 1),
+            ("ab", "abc", 1),
+            ("kitten", "sitting", 3),
+            ("flaw", "lawn", 2),
+            ("gumbo", "gambol", 2),
+            ("book", "back", 2),
+            ("Saturday", "Sunday", 3),
+        ];
+
+        for (left, right, expected) in cases {
+            assert_eq!(
+                levenshtein_distance(left, right),
+                expected,
+                "failed for {left:?} vs {right:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_symmetry() {
+        let pairs = [
+            ("kitten", "sitting"),
+            ("flaw", "lawn"),
+            ("abc", "xyz"),
+            ("rust", "trust"),
+        ];
+
+        for (left, right) in pairs {
+            assert_eq!(
+                levenshtein_distance(left, right),
+                levenshtein_distance(right, left),
+                "distance should be symmetrical for {left:?} and {right:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_unicode() {
+        assert_eq!(levenshtein_distance("é", "e"), 1);
+        assert_eq!(levenshtein_distance("éa", "éb"), 1);
+        assert_eq!(levenshtein_distance("猫", "犬"), 1);
+        assert_eq!(levenshtein_distance("hello 🌍", "hello 🌎"), 1);
     }
 }

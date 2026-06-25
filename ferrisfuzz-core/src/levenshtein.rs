@@ -99,4 +99,9 @@ mod tests {
         assert_eq!(levenshtein_distance("猫", "犬"), 1);
         assert_eq!(levenshtein_distance("hello 🌍", "hello 🌎"), 1);
     }
+
+    #[test]
+    fn crosstest_myers() {
+        assert_eq!(levenshtein_distance("acbd", "adcb"), 2);
+    }
 }

@@ -1,13 +1,19 @@
 use pyo3::prelude::*;
 
-/// A Python module implemented in Rust.
 #[pymodule]
 mod ferrisfuzz {
     use pyo3::prelude::*;
 
-    /// Formats the sum of two numbers as string.
     #[pyfunction]
-    fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-        Ok((a + b).to_string())
+    #[pyo3(signature = (str_1, str_2, max_len=None))]
+    fn myers_distance(str_1: &str, str_2: &str, max_len: Option<usize>) -> PyResult<usize> {
+        ferrisfuzz_core::myers::myers_distance(str_1, str_2, max_len)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+    }
+
+    #[pyfunction]
+    #[pyo3(signature = (str_1, str_2))]
+    fn levenshtein_distance(str_1: &str, str_2: &str) -> PyResult<usize> {
+        Ok(ferrisfuzz_core::levenshtein::levenshtein_distance(str_1, str_2))
     }
 }

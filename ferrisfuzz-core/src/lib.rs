@@ -1,5 +1,5 @@
-mod levenshtein;
-mod myers;
+pub mod levenshtein;
+pub mod myers;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

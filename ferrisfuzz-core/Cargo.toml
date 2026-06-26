@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"]}
+
+[[bench]]
+name = "distance"
+harness = false
+
+[dev-dependencies]
+rapidfuzz ="0.5"

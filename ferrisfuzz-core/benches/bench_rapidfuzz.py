@@ -47,6 +47,12 @@ def pure_python_myers(s1, s2):
                 return k
     return max_edits
 
+
+import ferrisfuzz
+print(ferrisfuzz.jaro_winkler_distance("MARTHA", "MARHTA"))
+print(ferrisfuzz.jaro_winkler_distance("MARTHA", "MARHTA", p=0.0))
+print(ferrisfuzz.jaro_winkler_distance("CRATE", "trace", case_insensitive=True))
+
 # --- short strings ---
 
 def test_rust_levenshtein_short(benchmark):

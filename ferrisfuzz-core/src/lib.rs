@@ -1,5 +1,6 @@
 pub mod levenshtein;
 pub mod myers;
+pub mod jaro_winkler;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

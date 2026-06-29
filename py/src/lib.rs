@@ -16,4 +16,11 @@ mod ferrisfuzz {
     fn levenshtein_distance(str_1: &str, str_2: &str) -> PyResult<usize> {
         Ok(ferrisfuzz_core::levenshtein::levenshtein_distance(str_1, str_2))
     }
+
+    #[pyfunction]
+    #[pyo3(signature = (str_1, str_2, p=None, case_insensitive=None))]
+    fn jaro_winkler_distance(str_1: &str, str_2: &str, p: Option<f64>, case_insensitive: Option<bool>) -> PyResult<f64> {
+        ferrisfuzz_core::jaro_winkler::jaro_winkler(str_1, str_2, p, case_insensitive)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+    }
 }

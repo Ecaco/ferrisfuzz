@@ -3,12 +3,25 @@ pub enum DamerauError {
     InputTooLong(String)
 }
 
-pub fn damerau(str_1: &str, str_2: &str) -> Result<usize, DamerauError> {
+pub fn damerau(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool> ) -> Result<usize, DamerauError> {
+    let case_insensitive= case_insensitive.unwrap_or(false);
+    let str_1 = if case_insensitive {
+        str_1.to_lowercase()
+    } else {
+        str_1.to_string()
+    };
+    let str_2 = if case_insensitive {
+        str_2.to_lowercase()
+    } else {
+        str_2.to_string()
+    };
+    
     let chars_1: Vec<char> = str_1.chars().collect();
     let chars_2: Vec<char> = str_2.chars().collect();
 
     let m = str_1.chars().count();
     let n = str_2.chars().count();
+
 
     if m == 0 && n == 0 {
         return Ok(0);
@@ -20,9 +33,14 @@ pub fn damerau(str_1: &str, str_2: &str) -> Result<usize, DamerauError> {
         return Ok(m);
     }
 
-    if m > 10_000 || n > 10_000 {
-        return Err(DamerauError::InputTooLong("String cannot be longer than 10,000 characters".to_string()));
-    };
+    let limit = max_len.unwrap_or(10_000);
+
+    if m > limit {
+    return Err(DamerauError::InputTooLong(format!("str_1 has an input value of {}: character limit is {}", m, limit)));
+    } else if n > limit {
+    return Err(DamerauError::InputTooLong(format!("str_2 has an input value of {}: Character limit is {}", n, limit)))
+    }
+
 
     let row_width = n + 1;
     
@@ -81,31 +99,31 @@ mod tests {
 
     #[test]
     fn test_ac_ca() {
-        assert_eq!(damerau("CA", "AC"), Ok(1) );
+        assert_eq!(damerau("CA", "AC", None, None), Ok(1) );
     }
 
     #[test]
     fn test_complex() {
-        assert_eq!(damerau("ABCDEFG", "BACDFEG"), Ok(2))
+        assert_eq!(damerau("ABCDEFG", "BACDFEG", None, None), Ok(2))
     }
 
     #[test] 
     fn test_string_length_guard() {
         let mut long_string = String::from("A");
-        for c in 0..10_001 {
+        for c in 0..10_005 {
             long_string.push('A') 
             }
 
-        assert_eq!(damerau(&long_string, "test"), Err(DamerauError::InputTooLong("String cannot be longer than 10,000 characters".to_string())))
+        assert_eq!(damerau(&long_string, "test", None, None), Err(DamerauError::InputTooLong("str_1 has an input value of 10006: character limit is 10000".to_string())))
     }
 
     #[test]
     fn test_empty_strings() {
-        assert_eq!(damerau("", ""), Ok(0) );
+        assert_eq!(damerau("", "", None, None), Ok(0) );
     }
 
     #[test]
     fn test_one_empty() {
-        assert_eq!(damerau("Test", ""), Ok(4) );
+        assert_eq!(damerau("Test", "", None, None), Ok(4) );
     }
 }

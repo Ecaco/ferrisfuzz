@@ -6,25 +6,25 @@ use ferrisfuzz_core::damerau::damerau;
 
 fn bench_levenshtein(c: &mut Criterion) {
     c.bench_function("levenshtein kitten→sitting", |b| {
-        b.iter(|| levenshtein_distance("kitten", "sitting"))
+        b.iter(|| levenshtein_distance("kitten", "sitting", None, None))
     });
 }
 
 fn bench_myers(c: &mut Criterion) {
     c.bench_function("myers kitten→sitting", |b| {
-        b.iter(|| myers_distance("kitten", "sitting", None))
+        b.iter(|| myers_distance("kitten", "sitting", None, None))
     });
 }
 
 fn bench_jaro(c: &mut Criterion) {
     c.bench_function("jaro kitten>sitting", |b| {
-        b.iter(|| jaro_winkler("kitten", "sitting", None, Some(false)))
+        b.iter(|| jaro_winkler("kitten", "sitting", None, None,None))
     });
 }
 
 fn bench_damerau(c: &mut Criterion) {
     c.bench_function("damerau kitten>sitting", |b| {
-        b.iter(|| damerau("kitten", "sitting"));
+        b.iter(|| damerau("kitten", "sitting", None, None));
     }
 );
 }
@@ -33,7 +33,7 @@ fn bench_levenshtein_long(c: &mut Criterion) {
     let s1 = "the quick brown fox jumps over the lazy dog";
     let s2 = "the slow green fox jumped over the lazy cat";
     c.bench_function("levenshtein long strings", |b| {
-        b.iter(|| levenshtein_distance(s1, s2))
+        b.iter(|| levenshtein_distance(s1, s2, None, None))
     });
 }
 
@@ -41,7 +41,7 @@ fn bench_myers_long(c: &mut Criterion) {
     let s1 = "the quick brown fox jumps over the lazy dog";
     let s2 = "the slow green fox jumped over the lazy cat";
     c.bench_function("myers long strings", |b| {
-        b.iter(|| myers_distance(s1, s2, None))
+        b.iter(|| myers_distance(s1, s2, None, None))
     });
 }
 
@@ -49,7 +49,7 @@ fn bench_jaro_winkler_long(c: &mut Criterion) {
     let s1 = "the quick brown fox jumps over the lazy dog";
     let s2 = "the slow green fox jumped over the lazy cat";
     c.bench_function("jaro winkler long strings", |b| {
-        b.iter(|| jaro_winkler(s1, s2, Some(0.0), None) )
+        b.iter(|| jaro_winkler(s1, s2, Some(0.0), None, None) )
     });
 }
 
@@ -57,7 +57,7 @@ fn bench_damerau_long(c: &mut Criterion) {
     let s1 = "the quick brown fox jumps over the lazy dog";
     let s2 = "the slow green fox jumped over the lazy cat";
     c.bench_function("damerau long strings", |b| {
-        b.iter(|| damerau(s1, s2) )
+        b.iter(|| damerau(s1, s2, None, None) )
     });
 }
 
@@ -76,7 +76,7 @@ fn bench_sweep(c: &mut Criterion) {
         group.bench_with_input(
             format!("myers_{}", len),
             &(s1, s2),
-            |b, (s1, s2)| b.iter(|| myers_distance(s1, s2, None))
+            |b, (s1, s2)| b.iter(|| myers_distance(s1, s2, None, None))
         );
     }
     

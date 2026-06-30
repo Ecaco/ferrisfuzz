@@ -1,21 +1,22 @@
 
 #[derive(Debug, PartialEq)]
 pub enum MyersErrors{
-    Str1TooLarge(String),
-    Str2TooLarge(String)
+    InputTooLong(String)
 }
 
-pub fn myers_distance(str_1: &str, str_2: &str, max_len: Option<usize>) -> Result<usize, MyersErrors> {
-    if let Some(limit) = max_len {
-        if str_1.chars().count() > limit {
-            return Err(MyersErrors::Str1TooLarge(format!("String 1 length {} exceeds limit of {}", str_1.chars().count(), limit)));
-            }
-
-        if str_2.chars().count() > limit {
-            return Err(MyersErrors::Str2TooLarge(format!("String 2 length {} exceeds limit of {}", str_2.chars().count(), limit)));
-            }
-        }
-
+pub fn myers_distance(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive:Option<bool>) -> Result<usize, MyersErrors> {
+    
+    let case_insensitive = case_insensitive.unwrap_or(false);
+    let str_1 = if case_insensitive {
+        str_1.to_lowercase()
+    } else {
+        str_1.to_string()
+    };
+    let str_2 = if case_insensitive {
+        str_2.to_lowercase()
+    } else {
+        str_2.to_string()
+    };
     // Conversion of strings into vectors of chars
     // eg ['f','o','r','t']
     let chars_1: Vec<char> = str_1.chars().collect();
@@ -24,9 +25,21 @@ pub fn myers_distance(str_1: &str, str_2: &str, max_len: Option<usize>) -> Resul
     let n = chars_2.len();
 
 
+
+    
+
+
     // Fast Guards. If value is 0, the value will always be the size of the opposite
     if m == 0 { return Ok(n); }
     if n == 0 { return Ok(m); }
+
+    let limit = max_len.unwrap_or(100_000);
+
+    if m > limit {
+    return Err(MyersErrors::InputTooLong(format!("str_1 has an input value of {}: Character limit is {}", m, limit)));
+    } else if n > limit {
+    return Err(MyersErrors::InputTooLong(format!("str_2 has an input value of {}: Character limit is {}", n, limit)))
+    }
 
     const THRESHOLD: usize = 8;
     // stack path
@@ -102,24 +115,24 @@ use super::*;
     fn test_distance() {
         let str_1 = "acbd";
         let str_2 = "adcb";
-        let dist = myers_distance(str_1, str_2, None);
+        let dist = myers_distance(str_1, str_2, None, None);
         println!("Distance is {:?}", dist);
-        assert_eq!(myers_distance(str_1, str_2, None),Ok(2))
+        assert_eq!(myers_distance(str_1, str_2, None, None),Ok(2))
         
     }
 
     #[test]
     fn test_ratcat() {
-        assert_eq!(myers_distance("short", "fort", None), Ok(3))
+        assert_eq!(myers_distance("short", "fort", None, None), Ok(3))
     }
 
     #[test]
     fn test_max_str_1() {
-        assert_eq!(myers_distance("Bigger", "Big", Some(3)), Err(MyersErrors::Str1TooLarge("String 1 length 6 exceeds limit of 3".to_string())));
+        assert_eq!(myers_distance("Bigger", "Big", Some(3), None), Err(MyersErrors::InputTooLong("str_1 has an input value of 6: Character limit is 3".to_string())));
     }
 
         #[test]
     fn test_max_str_2() {
-        assert_eq!(myers_distance("Big", "Bigger", Some(3)), Err(MyersErrors::Str2TooLarge("String 2 length 6 exceeds limit of 3".to_string())));
+        assert_eq!(myers_distance("Big", "Bigger", Some(3), None), Err(MyersErrors::InputTooLong("str_2 has an input value of 6: Character limit is 3".to_string())));
     }
 }

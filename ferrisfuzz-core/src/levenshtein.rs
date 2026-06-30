@@ -1,10 +1,48 @@
-pub fn levenshtein_distance(str_1: &str, str_2: &str) -> usize {
+#[derive(Debug, PartialEq)]
+pub enum LevenshteinError {
+    InputTooLong(String)
+}
+
+pub fn levenshtein_distance(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>) -> Result<usize, LevenshteinError> {
+    let limit = max_len.unwrap_or(10_000);
+    let case_insensitive= case_insensitive.unwrap_or(false);
+
+
+    let str_1 = if case_insensitive {
+        str_1.to_lowercase()
+    } else {
+        str_1.to_string()
+    };
+    let str_2 = if case_insensitive {
+        str_2.to_lowercase()
+    } else {
+        str_2.to_string()
+    };
+
+
     let chars_1: Vec<char> = str_1.chars().collect();
     let chars_2: Vec<char> = str_2.chars().collect();
 
-
-    let m = chars_1.len();
+    let m = chars_1.len();  
     let n = chars_2.len();
+
+    if m == 0 && n == 0 {
+        return Ok(0);
+    }
+    if m == 0 {
+        return Ok(n);
+    }
+    if n == 0 {
+        return Ok(m);
+    }
+
+    
+    if m > limit {
+    return Err(LevenshteinError::InputTooLong(format!("str_1 has an input value of {}: character limit is {}", m, limit)));
+    } else if n > limit {
+    return Err(LevenshteinError::InputTooLong(format!("str_2 has an input value of {}: Character limit is {}", n, limit)))
+    }
+    
     let row_width = n + 1;
     
     let mut matrix = vec![0; (m + 1) * (n + 1)];
@@ -38,7 +76,7 @@ pub fn levenshtein_distance(str_1: &str, str_2: &str) -> usize {
         }
         }
     }
-    matrix[m * row_width + n]
+    Ok(matrix[m * row_width + n])
 
 }
 
@@ -67,8 +105,8 @@ mod tests {
 
         for (left, right, expected) in cases {
             assert_eq!(
-                levenshtein_distance(left, right),
-                expected,
+                levenshtein_distance(left, right, None, None),
+                Ok(expected),
                 "failed for {left:?} vs {right:?}"
             );
         }
@@ -85,8 +123,8 @@ mod tests {
 
         for (left, right) in pairs {
             assert_eq!(
-                levenshtein_distance(left, right),
-                levenshtein_distance(right, left),
+                levenshtein_distance(left, right, None, None),
+                levenshtein_distance(right, left, None, None),
                 "distance should be symmetrical for {left:?} and {right:?}"
             );
         }
@@ -94,14 +132,19 @@ mod tests {
 
     #[test]
     fn test_unicode() {
-        assert_eq!(levenshtein_distance("é", "e"), 1);
-        assert_eq!(levenshtein_distance("éa", "éb"), 1);
-        assert_eq!(levenshtein_distance("猫", "犬"), 1);
-        assert_eq!(levenshtein_distance("hello 🌍", "hello 🌎"), 1);
+        assert_eq!(levenshtein_distance("é", "e", None, None), Ok(1));
+        assert_eq!(levenshtein_distance("éa", "éb", None, None), Ok(1));
+        assert_eq!(levenshtein_distance("猫", "犬", None, None), Ok(1));
+        assert_eq!(levenshtein_distance("hello 🌍", "hello 🌎", None, None), Ok(1));
     }
 
     #[test]
     fn crosstest_myers() {
-        assert_eq!(levenshtein_distance("acbd", "adcb"), 2);
+        assert_eq!(levenshtein_distance("acbd", "adcb", None, None), Ok(2));
+    }
+
+    #[test]
+    fn test_limits() {
+        assert_eq!(levenshtein_distance("acbd", "adcb", Some(3), None), Err(LevenshteinError::InputTooLong("str_1 has an input value of 4: character limit is 3".to_string())))
     }
 }

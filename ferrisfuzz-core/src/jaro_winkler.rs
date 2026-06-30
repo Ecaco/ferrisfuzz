@@ -2,10 +2,12 @@
 #[derive(Debug, PartialEq)]
 pub enum JaroWinklerError {
     InvalidPrefixScale(String),
+    InputTooLong(String),
 }
 
-pub fn jaro_winkler(str_1: &str, str_2: &str, p: Option<f64>, case_insensitive: Option<bool>) -> Result<f64, JaroWinklerError> {
+pub fn jaro_winkler(str_1: &str, str_2: &str, p: Option<f64>, max_len: Option<usize>, case_insensitive: Option<bool> ) -> Result<f64, JaroWinklerError> {
     // Guards
+    let limit = max_len.unwrap_or(100_000); // Linear so can be generous
     if str_1.trim().is_empty() && str_2.trim().is_empty() {
         return Ok(1.0);
     };
@@ -36,6 +38,12 @@ pub fn jaro_winkler(str_1: &str, str_2: &str, p: Option<f64>, case_insensitive: 
 
     let m = str_1.chars().count();
     let n = str_2.chars().count();
+
+    if m > limit {
+       return Err(JaroWinklerError::InputTooLong(format!("str_1 has an input value of {}: character limit is {}", m, limit)));
+    } else if n > limit {
+        return Err(JaroWinklerError::InputTooLong(format!("str_2 has an input value of {}: Character limit is {}", n, limit)))
+    }
 
     // Saturating sub: Stop it going below 0 (can't have a negative window)
     let window = (m.max(n) / 2).saturating_sub(1);
@@ -127,64 +135,69 @@ use super::*;
 
     #[test] 
     fn test_jaro_martha() {
-        let result = jaro_winkler("MARTHA", "MARHTA", Some(0.0), Some(false)).unwrap();
+        let result = jaro_winkler("MARTHA", "MARHTA", Some(0.0), None, None).unwrap();
         assert!((result - 0.944).abs() < 0.001, "got {}", result);
         
     }
 
     #[test]
     fn test_jaro_winkler_martha() {
-        let result = jaro_winkler("MARTHA", "MARHTA", None, None).unwrap();
+        let result = jaro_winkler("MARTHA", "MARHTA", None, None, None).unwrap();
         assert!((result - 0.961).abs() < 0.001, "got {}", result);
     }
 
     #[test]
     fn test_empty_string_2() {
-        let result = jaro_winkler("MARTHA", "",Some(0.0), None);
+        let result = jaro_winkler("MARTHA", "",Some(0.0), None, None);
         assert_eq!(result, Ok(0.0))
     }
 
     #[test]
     fn test_empty_string_1() {
-        let result = jaro_winkler("", "MARTHA",Some(0.0), None);
+        let result = jaro_winkler("", "MARTHA",Some(0.0), None, None);
         assert_eq!(result, Ok(0.0))
     }
 
     #[test]
     fn test_empty_strings() {
-        let result = jaro_winkler("", "", Some(0.0), None);
+        let result = jaro_winkler("", "", Some(0.0), None, None);
         assert_eq!(result, Ok(1.0))
     }
 
     #[test]
     fn test_upper_p() {
-        let result = jaro_winkler("MARTHA", "MARTER", Some(0.5), None);
+        let result = jaro_winkler("MARTHA", "MARTER", Some(0.5), None, None);
         assert_eq!(result, Err(JaroWinklerError::InvalidPrefixScale("0.5 is invalid: must be between 0.0 and 0.25".to_string())))
     }
 
     #[test]
     fn test_lower_p() {
-        let result = jaro_winkler("MARTHA", "MARTER", Some(-0.5), None);
+        let result = jaro_winkler("MARTHA", "MARTER", Some(-0.5), None, None);
         assert_eq!(result, Err(JaroWinklerError::InvalidPrefixScale("-0.5 is invalid: must be between 0.0 and 0.25".to_string())))
     }
 
     #[test]
     fn test_unicode_jw_match() {
-        let result = jaro_winkler("😂", "😂", Some(0.0), None);
+        let result = jaro_winkler("😂", "😂", Some(0.0), None, None);
         assert_eq!(result, Ok(1.0))
     }
         
     #[test]
     fn test_unicode_jw_dif() {
-        let result = jaro_winkler("🙂", "😂", Some(0.0), None);
+        let result = jaro_winkler("🙂", "😂", Some(0.0), None, None);
         assert_eq!(result, Ok(0.0))
     }
 
     #[test]
     fn test_crate_trace_case() {
-        let result = jaro_winkler("CRATE", "trace", Some(0.0), Some(true)).unwrap();
+        let result = jaro_winkler("CRATE", "trace", Some(0.0), None , Some(true)).unwrap();
         assert!((result - 0.733).abs() < 0.001, "got {}", result);
     }
 
+    #[test]
+    fn test_char_limit() {
+        let result = jaro_winkler("MARTHA", "MARHTA", Some(0.0), Some(5), None);
+        assert_eq!(result, Err(JaroWinklerError::InputTooLong("str_1 has an input value of 6: character limit is 5".to_string())))
+    }
 
 }

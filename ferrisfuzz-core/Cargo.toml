@@ -7,7 +7,7 @@ edition = "2024"
 criterion = { version = "0.5.1", features = ["html_reports"]}
 
 [[bench]]
-name = "distance"
+name = "benches"
 harness = false
 
 [dev-dependencies]

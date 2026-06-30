@@ -23,4 +23,11 @@ mod ferrisfuzz {
         ferrisfuzz_core::jaro_winkler::jaro_winkler(str_1, str_2, p, case_insensitive)
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
+
+    #[pyfunction]
+    #[pyo3(signature = (str_1, str_2))]
+    fn damerau(str_1: &str, str_2: &str) -> PyResult<usize> {
+        ferrisfuzz_core::damerau::damerau(str_1, str_2)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+    }
 }

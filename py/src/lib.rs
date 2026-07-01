@@ -33,8 +33,9 @@ mod ferrisfuzz {
     }
 
     #[pyfunction]
-    #[pyo3(signature = (str_1, str_2))]
-    fn levenshtein_bp(str_1: &str, str_2: &str) -> PyResult<usize> {
-        Ok(ferrisfuzz_core::levenshtein_bp::levenshtein_bp(str_1, str_2))
+    #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None, score_cuttoff= None))]
+    fn levenshtein_bp(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>, score_cuttoff: Option<usize>) -> PyResult<usize> {
+        ferrisfuzz_core::levenshtein_bp::levenshtein_bp(str_1, str_2, max_len, case_insensitive, score_cuttoff)
+        .map_err(|e|pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 }

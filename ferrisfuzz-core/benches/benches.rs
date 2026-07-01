@@ -63,7 +63,7 @@ fn bench_damerau_long(c: &mut Criterion) {
 
 fn bench_levenshtein_bp_short(c: &mut Criterion) {
     c.bench_function("levenshtein BP kitten→sitting", |b| {
-    b.iter(|| levenshtein_bp("kitten", "sitting"))
+    b.iter(|| levenshtein_bp("kitten", "sitting", None, None, None))
     });  
 }
 
@@ -71,7 +71,7 @@ fn bench_levenshtein_bp_long(c: &mut Criterion) {
     let s1 = "the quick brown fox jumps over the lazy dog";
     let s2 = "the slow green fox jumped over the lazy cat";
     c.bench_function("levenshtein bp long strings", |b| {
-    b.iter(|| levenshtein_bp(s1, s2))
+    b.iter(|| levenshtein_bp(s1, s2, None, None, None))
     });
 }
 

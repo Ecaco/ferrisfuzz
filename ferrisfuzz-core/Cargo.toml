@@ -7,6 +7,14 @@ edition = "2024"
 name = "benches"
 harness = false
 
+[[bench]]
+name = "benches_bp"
+harness=false
+
+[[bench]]
+name = "benches_rf"
+harness=false
+
 [dependencies]
 multiversion = "0.7"
 

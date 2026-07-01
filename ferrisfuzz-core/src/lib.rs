@@ -5,4 +5,4 @@ pub mod myers;
 pub mod jaro_winkler;
 pub mod damerau;
 pub mod levenshtein_bp;
-
+pub mod common;

@@ -17,7 +17,8 @@ fn bench_short(c: &mut Criterion) {
         bn.iter(|| levenshtein_distance(black_box(a), black_box(b), None, None))
     });
     g.bench_function("bit-parallel", |bn| {
-        bn.iter(|| levenshtein_bp(black_box(a), black_box(b)))
+        // benches:
+    bn.iter(|| levenshtein_bp(black_box(a), black_box(b), None, None, None).unwrap())
     });
     g.bench_function("damerau", |bn| {
         bn.iter(|| damerau(black_box(a), black_box(b), None, None))
@@ -32,7 +33,8 @@ fn bench_long(c: &mut Criterion) {
         bn.iter(|| levenshtein_distance(black_box(a), black_box(b), None, None))
     });
     g.bench_function("bit-parallel", |bn| {
-        bn.iter(|| levenshtein_bp(black_box(a), black_box(b)))
+        // benches:
+        bn.iter(|| levenshtein_bp(black_box(a), black_box(b), None, None, None).unwrap())
     });
     g.bench_function("damerau", |bn| {
         bn.iter(|| damerau(black_box(a), black_box(b), None, None))

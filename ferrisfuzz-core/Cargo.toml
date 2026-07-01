@@ -3,12 +3,13 @@ name = "ferrisfuzz-core"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
-criterion = { version = "0.5.1", features = ["html_reports"]}
-
 [[bench]]
 name = "benches"
 harness = false
 
+[dependencies]
+multiversion = "0.7"
+
 [dev-dependencies]
 rapidfuzz ="0.5"
+criterion = { version = "0.5.1", features = ["html_reports"]}

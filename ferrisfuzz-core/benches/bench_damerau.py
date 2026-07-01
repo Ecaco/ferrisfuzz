@@ -45,4 +45,8 @@ def test_rust_damerau_long(benchmark):
 def test_python_damerau_long(benchmark):
     benchmark(pure_python_damerau, LONG_A, LONG_B)
 
+def test_rust_levenshtein_b_short(benchmark):
+    benchmark(ferrisfuzz.levenshtein_bp, SHORT_A, SHORT_B)
 
+def test_rust_levenshtein_b_long(benchmark):
+    benchmark(ferrisfuzz.levenshtein_bp, LONG_A, LONG_B)

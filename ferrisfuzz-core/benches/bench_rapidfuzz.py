@@ -1,5 +1,6 @@
 import ferrisfuzz
 from rapidfuzz.distance import Levenshtein as RapidLevenshtein
+import rapidfuzz
 
 SHORT_A = "kitten"
 SHORT_B = "sitting"
@@ -48,38 +49,71 @@ def pure_python_myers(s1, s2):
     return max_edits
 
 
-# --- short strings ---
+# --- ferrisfuzz ---
 
 def test_rust_levenshtein_short(benchmark):
     benchmark(ferrisfuzz.levenshtein_distance, SHORT_A, SHORT_B)
 
-def test_python_levenshtein_short(benchmark):
-    benchmark(pure_python_levenshtein, SHORT_A, SHORT_B)
+def test_rust_levenshtein_long(benchmark):
+    benchmark(ferrisfuzz.levenshtein_distance, LONG_A, LONG_B)
 
-def test_rapidfuzz_levenshtein_short(benchmark):
-    benchmark(RapidLevenshtein.distance, SHORT_A, SHORT_B)
 
 def test_rust_myers_short(benchmark):
     benchmark(ferrisfuzz.myers_distance, SHORT_A, SHORT_B)
 
-def test_python_myers_short(benchmark):
-    benchmark(pure_python_myers, SHORT_A, SHORT_B)
+def test_rust_myers_long(benchmark):
+    benchmark(ferrisfuzz.myers_distance, LONG_A, LONG_B)
 
-# --- long strings ---
+def test_rust_jaro_winkler_short(benchmark):
+    benchmark(ferrisfuzz.jaro_winkler_distance, SHORT_A, SHORT_B)
 
-def test_rust_levenshtein_long(benchmark):
-    benchmark(ferrisfuzz.levenshtein_distance, LONG_A, LONG_B)
+def test_rust_jaro_winkler_long(benchmark):
+    benchmark(ferrisfuzz.jaro_winkler_distance, LONG_A, LONG_B)
 
-def test_python_levenshtein_long(benchmark):
-    benchmark(pure_python_levenshtein, LONG_A, LONG_B)
+def test_rust_damerau_levenshtein_short(benchmark):
+    benchmark(ferrisfuzz.damerau, SHORT_A, SHORT_B)
+
+def test_rust_damerau_levenshtein_long(benchmark):
+    benchmark(ferrisfuzz.damerau, LONG_A, LONG_B)
+
+
+
+
+# --- rapidfuzz ---
 
 def test_rapidfuzz_levenshtein_long(benchmark):
     benchmark(RapidLevenshtein.distance, LONG_A, LONG_B)
 
+def test_rapidfuzz_levenshtein_short(benchmark):
+    benchmark(RapidLevenshtein.distance, SHORT_A, SHORT_B)
+
+def test_rapidfuzz_jaro_winkler_short(benchmark):
+    benchmark(rapidfuzz.distance.JaroWinkler.distance, SHORT_A, SHORT_B)
+
+def test_rapidfuzz_damerau_levenshtein_short(benchmark):
+    benchmark(rapidfuzz.distance.DamerauLevenshtein.distance, SHORT_A, SHORT_B)
+
 def test_rust_myers_long(benchmark):
     benchmark(ferrisfuzz.myers_distance, LONG_A, LONG_B)
 
+def test_rapidfuzz_jaro_winkler_long(benchmark):
+    benchmark(rapidfuzz.distance.JaroWinkler.distance, LONG_A, LONG_B)
+
+def test_rapidfuzz_damerau_levenshtein_long(benchmark):
+    benchmark(rapidfuzz.distance.DamerauLevenshtein.distance, LONG_A, LONG_B)
+
+
+# --- pure python ---
+
+
+def test_python_levenshtein_long(benchmark):
+    benchmark(pure_python_levenshtein, LONG_A, LONG_B)
+
+def test_python_myers_short(benchmark):
+    benchmark(pure_python_myers, SHORT_A, SHORT_B)
+
+def test_python_levenshtein_short(benchmark):
+    benchmark(pure_python_levenshtein, SHORT_A, SHORT_B)
+
 def test_python_myers_long(benchmark):
     benchmark(pure_python_myers, LONG_A, LONG_B)
-
-    

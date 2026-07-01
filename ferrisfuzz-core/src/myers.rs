@@ -1,4 +1,13 @@
 
+use core::ops::ControlFlow::Break;
+
+use crate::alloc::string::ToString;
+use alloc::string::String;
+use alloc::format;
+use alloc::vec;
+use alloc::vec::Vec;
+
+
 #[derive(Debug, PartialEq)]
 pub enum MyersErrors{
     InputTooLong(String)
@@ -90,6 +99,8 @@ fn myers_inner(chars_1: &[char], chars_2: &[char], furthest: &mut [usize], offse
                 continue;
             }
             let mut col = col_signed as usize;      
+
+            //swapped for autovectorization (pulp)
             while row < m && col < n && chars_1[row] == chars_2[col] {
                 row += 1;
                 col += 1;
@@ -115,8 +126,6 @@ use super::*;
     fn test_distance() {
         let str_1 = "acbd";
         let str_2 = "adcb";
-        let dist = myers_distance(str_1, str_2, None, None);
-        println!("Distance is {:?}", dist);
         assert_eq!(myers_distance(str_1, str_2, None, None),Ok(2))
         
     }

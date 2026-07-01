@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use ferrisfuzz_core::levenshtein::levenshtein_distance;
+use ferrisfuzz_core::{levenshtein::levenshtein_distance, levenshtein_bp::levenshtein_bp};
 use ferrisfuzz_core::myers::myers_distance;
 use ferrisfuzz_core::jaro_winkler::jaro_winkler;
 use ferrisfuzz_core::damerau::damerau;
@@ -61,6 +61,20 @@ fn bench_damerau_long(c: &mut Criterion) {
     });
 }
 
+fn bench_levenshtein_bp_short(c: &mut Criterion) {
+    c.bench_function("levenshtein BP kitten→sitting", |b| {
+    b.iter(|| levenshtein_bp("kitten", "sitting"))
+    });  
+}
+
+fn bench_levenshtein_bp_long(c: &mut Criterion) {
+    let s1 = "the quick brown fox jumps over the lazy dog";
+    let s2 = "the slow green fox jumped over the lazy cat";
+    c.bench_function("levenshtein bp long strings", |b| {
+    b.iter(|| levenshtein_bp(s1, s2))
+    });
+}
+
 fn bench_sweep(c: &mut Criterion) {
     let mut group = c.benchmark_group("length sweep");
     
@@ -95,5 +109,6 @@ fn bench_rapidfuzz_levenshtein(c: &mut Criterion) {
 }
 
 
-criterion_group!(benches, bench_levenshtein, bench_myers, bench_jaro, bench_damerau, bench_levenshtein_long, bench_myers_long, bench_jaro_winkler_long, bench_damerau_long, bench_sweep, bench_rapidfuzz_levenshtein);
-criterion_main!(benches);
+//criterion_group!(benches, bench_levenshtein, bench_myers, bench_jaro, bench_damerau, bench_levenshtein_long, bench_myers_long, bench_jaro_winkler_long, bench_damerau_long, bench_sweep, bench_rapidfuzz_levenshtein);
+criterion_group!(levenshetein_benches, bench_levenshtein, bench_levenshtein_long, bench_levenshtein_bp_short, bench_levenshtein_bp_long);
+criterion_main!(levenshetein_benches);

@@ -15,8 +15,9 @@ harness=false
 name = "benches_rf"
 harness=false
 
-[dependencies]
-multiversion = "0.7"
+[[bench]]
+name = "benches_batch"
+harness= false
 
 [dev-dependencies]
 rapidfuzz ="0.5"

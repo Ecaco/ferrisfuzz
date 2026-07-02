@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 ferrisfuzz-core = { path = "../ferrisfuzz-core"}
-pyo3 = "0.29.0"
+pyo3 = {version = "0.29.0", features = ["extension-module"] }
 
 [lib]
 crate-type = ["cdylib"]

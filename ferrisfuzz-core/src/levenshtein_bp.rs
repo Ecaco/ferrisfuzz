@@ -26,8 +26,6 @@ pub fn levenshtein_bp(
 
     let ascii_only = s1.is_ascii() && s2.is_ascii();
 
-    // On the ASCII path, byte length == char length — so m/n need no decode.
-    // Off it, count chars (still once each).
     let (m, n) = if ascii_only {
         (s1.len(), s2.len())
     } else {
@@ -47,10 +45,8 @@ pub fn levenshtein_bp(
     if n == 0 { return Ok(apply_cutoff(m, score_cutoff)); }
 
     let score = if ascii_only && m <= 64 {
-        // no Vec<char> built at all on this path
         levenshtein_bp_small_bytes(s1.as_bytes(), s2.as_bytes(), m)
     } else {
-        // only the char paths pay for the collect
         let query: Vec<char> = s1.chars().collect();
         if m <= 64 {
             levenshtein_bp_small(&query, s2.as_ref(), m)
@@ -290,7 +286,6 @@ mod tests {
     #[test]
     fn test_non_ascii_takes_char_path_and_is_correct() {
         // café vs cafe: 1 edit at the CHARACTER level. Byte-Myers would say 2 (é = 2 bytes).
-        // This test fails loudly if a non-ASCII input wrongly hits the bytes path.
         let d = levenshtein_bp("café", "cafe", None, None, None).unwrap();
         let classic = levenshtein_distance("café", "cafe", None, None).unwrap();
         assert_eq!(d, classic, "non-ASCII must use the char path");

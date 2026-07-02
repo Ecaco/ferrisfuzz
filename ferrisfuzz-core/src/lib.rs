@@ -7,3 +7,4 @@ pub mod damerau;
 pub mod levenshtein_bp;
 pub mod common;
 pub mod levenshtein_batch;
+pub mod damerau_bp;

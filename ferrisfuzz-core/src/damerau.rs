@@ -116,7 +116,7 @@ mod tests {
     #[test] 
     fn test_string_length_guard() {
         let mut long_string = String::from("A");
-        for c in 0..10_005 {
+        for i32 in 0..10_005 {
             long_string.push('A') 
             }
 

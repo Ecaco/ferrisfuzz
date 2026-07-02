@@ -19,6 +19,10 @@ harness=false
 name = "benches_batch"
 harness= false
 
+[[bench]]
+name = "bench_damerau"
+harness=false
+
 [dev-dependencies]
 rapidfuzz ="0.5"
 criterion = { version = "0.5.1", features = ["html_reports"]}

@@ -2,7 +2,6 @@ use alloc::vec::Vec;
 use alloc::collections::BTreeMap;
 use crate::common::{MatchError, check_len, apply_cutoff, normalize};
 use alloc::vec;
-use alloc::string::String;
 
 
 pub fn damerau_bp(
@@ -248,7 +247,8 @@ fn damerau_bp_small_bytes(query: &[u8], target: &[u8], m: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::damerau::damerau;
+    use crate::damerau::damerau_classic;
+    use alloc::string::String;
 
     #[test]
     fn bp_matches_classic_osa_transpositions() {
@@ -260,7 +260,7 @@ mod tests {
         ];
     for (a, b) in pairs {
         let bp = damerau_bp(a, b, None, None, None).unwrap();   // entry fn, not _small
-        let classic = damerau(a, b, None, None).unwrap();
+        let classic = damerau_classic(a, b, None, None).unwrap();
         assert_eq!(bp, classic, "mismatch on {a:?}/{b:?}: bp={bp} classic={classic}");
     }
     }
@@ -273,7 +273,7 @@ mod tests {
         let b = "the quick brown fox jumps over the lazy dog then runs home quickly yx"; // xy->yx swap at the end (pos 65)
         assert_eq!(
             damerau_bp(a, b, None, None, None).unwrap(),
-            damerau(a, b, None, None).unwrap()
+            damerau_classic(a, b, None, None).unwrap()
         );
 
         // A few more: long identical, long with mid transposition, long with edits.
@@ -283,7 +283,7 @@ mod tests {
         let swapped: String = swapped.into_iter().collect();
         assert_eq!(
             damerau_bp(&base, &swapped, None, None, None).unwrap(),
-            damerau(&base, &swapped, None, None).unwrap()
+            damerau_classic(&base, &swapped, None, None).unwrap()
         );
     }
 }

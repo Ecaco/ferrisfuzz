@@ -9,7 +9,7 @@ pub enum DamerauError {
     InputTooLong(String)
 }
 
-pub fn damerau(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool> ) -> Result<usize, DamerauError> {
+pub fn damerau_classic(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool> ) -> Result<usize, DamerauError> {
     let case_insensitive= case_insensitive.unwrap_or(false);
     let str_1 = if case_insensitive {
         str_1.to_lowercase()
@@ -78,7 +78,7 @@ pub fn damerau(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitiv
 
             let mut min_cost = a.min(b).min(c);
 
-            // damerau transposition check
+            // damerau_classic transposition check
             if row > 1 && col > 1
             && chars_1[row - 1] == chars_2[col - 2] 
             && chars_1[row - 2] == chars_2[col - 1]
@@ -105,12 +105,12 @@ mod tests {
 
     #[test]
     fn test_ac_ca() {
-        assert_eq!(damerau("CA", "AC", None, None), Ok(1) );
+        assert_eq!(damerau_classic("CA", "AC", None, None), Ok(1) );
     }
 
     #[test]
     fn test_complex() {
-        assert_eq!(damerau("ABCDEFG", "BACDFEG", None, None), Ok(2))
+        assert_eq!(damerau_classic("ABCDEFG", "BACDFEG", None, None), Ok(2))
     }
 
     #[test] 
@@ -120,16 +120,16 @@ mod tests {
             long_string.push('A') 
             }
 
-        assert_eq!(damerau(&long_string, "test", None, None), Err(DamerauError::InputTooLong("str_1 has an input value of 10006: character limit is 10000".to_string())))
+        assert_eq!(damerau_classic(&long_string, "test", None, None), Err(DamerauError::InputTooLong("str_1 has an input value of 10006: character limit is 10000".to_string())))
     }
 
     #[test]
     fn test_empty_strings() {
-        assert_eq!(damerau("", "", None, None), Ok(0) );
+        assert_eq!(damerau_classic("", "", None, None), Ok(0) );
     }
 
     #[test]
     fn test_one_empty() {
-        assert_eq!(damerau("Test", "", None, None), Ok(4) );
+        assert_eq!(damerau_classic("Test", "", None, None), Ok(4) );
     }
 }

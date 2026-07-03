@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use alloc::vec;
 use alloc::collections::BTreeMap;
-use alloc::format;
+
 
 use crate::common::{normalize, check_len, apply_cutoff, MatchError};
 
@@ -201,7 +201,7 @@ fn levenshtein_bp_small_bytes(query: &[u8], target: &[u8], m: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::levenshtein::levenshtein_distance;
+    use crate::levenshtein::levenshtein_distance_classic;
 
     #[test]
     fn test_basic() {
@@ -255,7 +255,7 @@ mod tests {
         ];
         for (s1, s2) in pairs {
             let bp = levenshtein_bp(s1, s2, None, None, None);
-            let classic = levenshtein_distance(s1, s2, None, None).unwrap();
+            let classic = levenshtein_distance_classic(s1, s2, None, None).unwrap();
             assert_eq!(bp, Ok(classic), "mismatch on {:?} vs {:?}", s1, s2);
         }
     }
@@ -268,7 +268,7 @@ mod tests {
         ];
         for (s1, s2) in &pairs {
             let bp = levenshtein_bp(s1, s2, None, None, None);
-            let classic = levenshtein_distance(s1, s2, None, None).unwrap();
+            let classic = levenshtein_distance_classic(s1, s2, None, None).unwrap();
             assert_eq!(bp, Ok(classic), "mismatch len {}", s1.chars().count());
         }
     }
@@ -278,7 +278,7 @@ mod tests {
         for (a, b) in [("kitten","sitting"), ("flaw","lawn"), ("Saturday","Sunday")] {
             // (both go through the same public fn; this proves the ascii fork is correct)
             let d = levenshtein_bp(a, b, None, None, None).unwrap();
-            let classic = levenshtein_distance(a, b, None, None).unwrap();
+            let classic = levenshtein_distance_classic(a, b, None, None).unwrap();
             assert_eq!(d, classic);
         }
     }
@@ -287,7 +287,7 @@ mod tests {
     fn test_non_ascii_takes_char_path_and_is_correct() {
         // café vs cafe: 1 edit at the CHARACTER level. Byte-Myers would say 2 (é = 2 bytes).
         let d = levenshtein_bp("café", "cafe", None, None, None).unwrap();
-        let classic = levenshtein_distance("café", "cafe", None, None).unwrap();
+        let classic = levenshtein_distance_classic("café", "cafe", None, None).unwrap();
         assert_eq!(d, classic, "non-ASCII must use the char path");
         assert_eq!(d, 1);
     }

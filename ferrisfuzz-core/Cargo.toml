@@ -4,24 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [[bench]]
-name = "benches"
+name = "rust_bench"
 harness = false
-
-[[bench]]
-name = "benches_bp"
-harness=false
-
-[[bench]]
-name = "benches_rf"
-harness=false
-
-[[bench]]
-name = "benches_batch"
-harness= false
-
-[[bench]]
-name = "bench_damerau"
-harness=false
 
 [dev-dependencies]
 rapidfuzz ="0.5"

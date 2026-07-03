@@ -10,7 +10,7 @@ pub enum LevenshteinError {
     InputTooLong(String)
 }
 
-pub fn levenshtein_distance(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>) -> Result<usize, LevenshteinError> {
+pub fn levenshtein_distance_classic(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>) -> Result<usize, LevenshteinError> {
     let limit = max_len.unwrap_or(10_000);
     let case_insensitive= case_insensitive.unwrap_or(false);
 
@@ -112,7 +112,7 @@ mod tests {
 
         for (left, right, expected) in cases {
             assert_eq!(
-                levenshtein_distance(left, right, None, None),
+                levenshtein_distance_classic(left, right, None, None),
                 Ok(expected),
                 "failed for {left:?} vs {right:?}"
             );
@@ -130,8 +130,8 @@ mod tests {
 
         for (left, right) in pairs {
             assert_eq!(
-                levenshtein_distance(left, right, None, None),
-                levenshtein_distance(right, left, None, None),
+                levenshtein_distance_classic(left, right, None, None),
+                levenshtein_distance_classic(right, left, None, None),
                 "distance should be symmetrical for {left:?} and {right:?}"
             );
         }
@@ -139,19 +139,19 @@ mod tests {
 
     #[test]
     fn test_unicode() {
-        assert_eq!(levenshtein_distance("é", "e", None, None), Ok(1));
-        assert_eq!(levenshtein_distance("éa", "éb", None, None), Ok(1));
-        assert_eq!(levenshtein_distance("猫", "犬", None, None), Ok(1));
-        assert_eq!(levenshtein_distance("hello 🌍", "hello 🌎", None, None), Ok(1));
+        assert_eq!(levenshtein_distance_classic("é", "e", None, None), Ok(1));
+        assert_eq!(levenshtein_distance_classic("éa", "éb", None, None), Ok(1));
+        assert_eq!(levenshtein_distance_classic("猫", "犬", None, None), Ok(1));
+        assert_eq!(levenshtein_distance_classic("hello 🌍", "hello 🌎", None, None), Ok(1));
     }
 
     #[test]
     fn crosstest_myers() {
-        assert_eq!(levenshtein_distance("acbd", "adcb", None, None), Ok(2));
+        assert_eq!(levenshtein_distance_classic("acbd", "adcb", None, None), Ok(2));
     }
 
     #[test]
     fn test_limits() {
-        assert_eq!(levenshtein_distance("acbd", "adcb", Some(3), None), Err(LevenshteinError::InputTooLong("str_1 has an input value of 4: character limit is 3".to_string())))
+        assert_eq!(levenshtein_distance_classic("acbd", "adcb", Some(3), None), Err(LevenshteinError::InputTooLong("str_1 has an input value of 4: character limit is 3".to_string())))
     }
 }

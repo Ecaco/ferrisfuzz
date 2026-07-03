@@ -43,6 +43,7 @@ impl LevenshteinBatch {
         }
     }
 
+    #[inline]
     pub fn distance(&self, target: &str) -> usize {
         if self.m == 0 {
             return target.chars().count(); // empty query ⇒ all insertions
@@ -90,6 +91,8 @@ pub fn levenshtein_batch(
     let scorer = LevenshteinBatch::new(query, case_insensitive);
     candidates.iter().map(|t| scorer.distance(t)).collect()
 }
+
+
 
 #[cfg(test)]
 mod tests {

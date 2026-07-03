@@ -9,29 +9,7 @@ mod ferrisfuzz {
     // Single-pair bindings — thin, zero algorithm logic, error-mapped.
     // ---------------------------------------------------------------
 
-    #[pyfunction]
-    #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None))]
-    fn myers_distance(
-        str_1: &str,
-        str_2: &str,
-        max_len: Option<usize>,
-        case_insensitive: Option<bool>,
-    ) -> PyResult<usize> {
-        ferrisfuzz_core::myers::myers_distance(str_1, str_2, max_len, case_insensitive)
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
-    }
 
-    #[pyfunction]
-    #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None))]
-    fn levenshtein_distance(
-        str_1: &str,
-        str_2: &str,
-        max_len: Option<usize>,
-        case_insensitive: Option<bool>,
-    ) -> PyResult<usize> {
-        ferrisfuzz_core::levenshtein::levenshtein_distance(str_1, str_2, max_len, case_insensitive)
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
-    }
 
     #[pyfunction]
     #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None, score_cutoff=None))]
@@ -40,23 +18,12 @@ mod ferrisfuzz {
         str_2: &str,
         max_len: Option<usize>,
         case_insensitive: Option<bool>,
-        score_cutoff: Option<usize>,      // FIXED: was `score_cuttoff` — kwarg names are public API
+        score_cutoff: Option<usize>,     
     ) -> PyResult<usize> {
         ferrisfuzz_core::levenshtein_bp::levenshtein_bp(str_1, str_2, max_len, case_insensitive, score_cutoff)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
-    #[pyfunction]
-    #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None))]
-    fn damerau(
-        str_1: &str,
-        str_2: &str,
-        max_len: Option<usize>,
-        case_insensitive: Option<bool>,
-    ) -> PyResult<usize> {
-        ferrisfuzz_core::damerau::damerau(str_1, str_2, max_len, case_insensitive)
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
-    }
 
     #[pyfunction]
     #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None, score_cutoff=None))]
@@ -71,11 +38,7 @@ mod ferrisfuzz {
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
-    /// RENAMED from `jaro_winkler_distance`: it returns a SIMILARITY in [0, 1]
-    /// (1.0 = identical). Calling a similarity a distance is the exact confusion
-    /// the core's doc comment warns against — the binding must not reintroduce it.
-    /// Now wired to `jaro_winkler_opt` so `score_cutoff` (a similarity FLOOR)
-    /// is actually exposed to Python.
+
     #[pyfunction]
     #[pyo3(signature = (str_1, str_2, p=None, max_len=None, case_insensitive=None, score_cutoff=None))]
     fn jaro_winkler_similarity(
@@ -86,7 +49,7 @@ mod ferrisfuzz {
         case_insensitive: Option<bool>,
         score_cutoff: Option<f64>,
     ) -> PyResult<f64> {
-        ferrisfuzz_core::jaro_winkler_opt::jaro_winkler_opt(
+        ferrisfuzz_core::jaro_winkler::jaro_winkler(
             str_1, str_2, p, max_len, case_insensitive, score_cutoff,
         )
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))

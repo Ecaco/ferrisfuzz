@@ -1,7 +1,7 @@
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use crate::common::MatchError;
-use crate::jaro_winkler_opt::{jaro_winkler_opt, jaro_to_winkler};
+use crate::jaro_winkler::{jaro_winkler, jaro_to_winkler};
 
 /// Compile-once Jaro-Winkler scorer: one query vs many targets.
 ///
@@ -121,7 +121,7 @@ impl JaroWinklerBatch {
         } else {
             // Non-ASCII or > 64 chars: single-pair fallback, original strings.
             // p already validated, lens unbounded, cutoff not applicable → no error path.
-            jaro_winkler_opt(&self.query, target, Some(self.p), None, self.case_insensitive, None)
+            jaro_winkler(&self.query, target, Some(self.p), None, self.case_insensitive, None)
                 .unwrap_or(0.0)
         }
     }
@@ -140,7 +140,7 @@ pub fn jaro_winkler_batch(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::jaro_winkler_opt::jaro_winkler_opt;
+    use crate::jaro_winkler::jaro_winkler;
 
     const QUERY: &str = "martha";
     const WORDS: &[&str] = &[
@@ -158,7 +158,7 @@ mod tests {
     fn batch_matches_singlepair_case_sensitive() {
         let scorer = JaroWinklerBatch::new(QUERY, None, None).unwrap();
         for &w in WORDS {
-            let single = jaro_winkler_opt(QUERY, w, None, None, None, None).unwrap();
+            let single = jaro_winkler(QUERY, w, None, None, None, None).unwrap();
             assert_close(scorer.similarity(w), single, w);
         }
     }
@@ -168,7 +168,7 @@ mod tests {
         let ci = Some(true);
         let scorer = JaroWinklerBatch::new(QUERY, None, ci).unwrap();
         for &w in WORDS {
-            let single = jaro_winkler_opt(QUERY, w, None, None, ci, None).unwrap();
+            let single = jaro_winkler(QUERY, w, None, None, ci, None).unwrap();
             assert_close(scorer.similarity(w), single, w);
         }
     }
@@ -176,7 +176,7 @@ mod tests {
     #[test]
     fn batch_nonascii_query_falls_back() {
         let scorer = JaroWinklerBatch::new("café", None, None).unwrap();
-        let single = jaro_winkler_opt("café", "cafe", None, None, None, None).unwrap();
+        let single = jaro_winkler("café", "cafe", None, None, None, None).unwrap();
         assert_close(scorer.similarity("cafe"), single, "café/cafe");
     }
 
@@ -184,7 +184,7 @@ mod tests {
     fn batch_long_target_falls_back() {
         let scorer = JaroWinklerBatch::new(QUERY, None, None).unwrap();
         let long = "a".repeat(70);
-        let single = jaro_winkler_opt(QUERY, &long, None, None, None, None).unwrap();
+        let single = jaro_winkler(QUERY, &long, None, None, None, None).unwrap();
         assert_close(scorer.similarity(&long), single, "long target");
     }
 
@@ -222,7 +222,7 @@ mod tests {
                 b = v.into_iter().collect();
             }
             let scorer = JaroWinklerBatch::new(&a, None, None).unwrap();
-            let single = jaro_winkler_opt(&a, &b, None, None, None, None).unwrap();
+            let single = jaro_winkler(&a, &b, None, None, None, None).unwrap();
             assert_close(scorer.similarity(&b), single, &alloc::format!("{a:?}/{b:?}"));
         }
     }

@@ -1,8 +1,10 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion, black_box};
 use ferrisfuzz_core::{levenshtein::levenshtein_distance, levenshtein_bp::levenshtein_bp};
 use ferrisfuzz_core::myers::myers_distance;
 use ferrisfuzz_core::jaro_winkler::jaro_winkler;
 use ferrisfuzz_core::damerau::damerau;
+use ferrisfuzz_core::jaro_winkler_opt::jaro_winkler_opt;
+use rapidfuzz::distance::jaro_winkler::distance;
 
 fn bench_levenshtein(c: &mut Criterion) {
     c.bench_function("levenshtein kitten→sitting", |b| {
@@ -18,7 +20,13 @@ fn bench_myers(c: &mut Criterion) {
 
 fn bench_jaro(c: &mut Criterion) {
     c.bench_function("jaro kitten>sitting", |b| {
-        b.iter(|| jaro_winkler("kitten", "sitting", None, None,None))
+        b.iter(|| jaro_winkler(black_box("kitten"), black_box("sitting"), None, None,None))
+    });
+}
+
+fn bench_jaro_opt(c: &mut Criterion) {
+    c.bench_function("jaro_winkler kitten>sitting optimised", |b| {
+        b.iter(|| jaro_winkler_opt(black_box("kitten"), black_box("sitting"), None, None, None, None));
     });
 }
 
@@ -49,7 +57,15 @@ fn bench_jaro_winkler_long(c: &mut Criterion) {
     let s1 = "the quick brown fox jumps over the lazy dog";
     let s2 = "the slow green fox jumped over the lazy cat";
     c.bench_function("jaro winkler long strings", |b| {
-        b.iter(|| jaro_winkler(s1, s2, Some(0.0), None, None) )
+        b.iter(|| jaro_winkler(black_box(s1), black_box(s2), Some(0.0), None, None) )
+    });
+}
+
+fn bench_jaro_winkler_long_opt(c: &mut Criterion) {
+    let s1 = "the quick brown fox jumps over the lazy dog";
+    let s2 = "the slow green fox jumped over the lazy cat";
+    c.bench_function("jaro winkler long strings opt", |b| {
+        b.iter(||jaro_winkler_opt(s1, s2, None, None, None, None));
     });
 }
 
@@ -72,6 +88,28 @@ fn bench_levenshtein_bp_long(c: &mut Criterion) {
     let s2 = "the slow green fox jumped over the lazy cat";
     c.bench_function("levenshtein bp long strings", |b| {
     b.iter(|| levenshtein_bp(s1, s2, None, None, None))
+    });
+}
+
+fn bench_rapidfuzz_jaro_short(c: &mut Criterion) {
+    c.bench_function("rapidfuzz jaro kitten>sitting", |b| {
+        b.iter(|| {
+            rapidfuzz::distance::jaro_winkler::distance(
+                black_box("kitten").bytes(),
+                black_box("sitting").bytes(),
+            )
+        })
+    });
+}
+
+fn bench_rapidfuzz_jaro_long(c: &mut Criterion) {
+        c.bench_function("rapidfuzz jaro long", |b| {
+        b.iter(|| {
+            rapidfuzz::distance::jaro_winkler::distance(
+                black_box("the quick brown fox jumps over the lazy dog").bytes(),
+                black_box("the slow green fox jumped over the lazy cat").bytes(),
+            )
+        })
     });
 }
 
@@ -110,5 +148,6 @@ fn bench_rapidfuzz_levenshtein(c: &mut Criterion) {
 
 
 //criterion_group!(benches, bench_levenshtein, bench_myers, bench_jaro, bench_damerau, bench_levenshtein_long, bench_myers_long, bench_jaro_winkler_long, bench_damerau_long, bench_sweep, bench_rapidfuzz_levenshtein);
-criterion_group!(levenshetein_benches, bench_levenshtein, bench_levenshtein_long, bench_levenshtein_bp_short, bench_levenshtein_bp_long);
-criterion_main!(levenshetein_benches);
+//criterion_group!(levenshetein_benches, bench_levenshtein, bench_levenshtein_long, bench_levenshtein_bp_short, bench_levenshtein_bp_long);
+criterion_group!(jaros_benches, bench_jaro_opt, bench_jaro_winkler_long_opt, bench_rapidfuzz_jaro_short, bench_rapidfuzz_jaro_long);
+criterion_main!(jaros_benches);

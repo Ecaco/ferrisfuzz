@@ -111,7 +111,7 @@ fn damerau_bp_multiword(query: &[char], target: &str, m: usize) -> usize {
     let num_words = (m + 63) / 64;
     let last_mask = 1u64 << ((m - 1) % 64);
 
-    // Match table: identical to levenshtein_bp_multiword.
+    // Match table: identical to levenshtein_bp_multiword
     let mut ascii = vec![0u64; 256 * num_words];
     let mut wide: BTreeMap<char, Vec<u64>> = BTreeMap::new();
     for (i, &c) in query.iter().enumerate() {
@@ -270,7 +270,7 @@ mod tests {
         // Must exceed 64 chars to hit the multiword path. Include transpositions,
         // and critically one NEAR position 64 to stress the cross-word carry.
         let a = "the quick brown fox jumps over the lazy dog then runs home quickly xy";
-        let b = "the quick brown fox jumps over the lazy dog then runs home quickly yx"; // xy->yx swap at the end (~pos 65)
+        let b = "the quick brown fox jumps over the lazy dog then runs home quickly yx"; // xy->yx swap at the end (pos 65)
         assert_eq!(
             damerau_bp(a, b, None, None, None).unwrap(),
             damerau(a, b, None, None).unwrap()

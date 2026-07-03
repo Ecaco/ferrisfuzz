@@ -5,10 +5,11 @@
 use alloc::borrow::Cow;
 use alloc::string::String;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum MatchError {
     /// One input exceeded the configured character cap.
     InputTooLong { which: &'static str, len: usize, limit: usize },
+    InvalidPrefixScale {value: f64},
 }
 
 impl MatchError {
@@ -17,6 +18,9 @@ impl MatchError {
         match self {
             MatchError::InputTooLong { which, len, limit } => {
                 alloc::format!("{which} has {len} characters; the limit is {limit}")
+            }
+            MatchError::InvalidPrefixScale { value } => {
+                alloc::format!("Invalid prefix value: {value}")
             }
         }
     }

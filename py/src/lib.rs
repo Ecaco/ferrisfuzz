@@ -1,96 +1,189 @@
 use pyo3::prelude::*;
 
-
 #[pymodule]
 mod ferrisfuzz {
     use pyo3::prelude::*;
     use pyo3::pybacked::PyBackedStr;
 
+    // ---------------------------------------------------------------
+    // Single-pair bindings — thin, zero algorithm logic, error-mapped.
+    // ---------------------------------------------------------------
+
     #[pyfunction]
     #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None))]
-    fn myers_distance(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>) -> PyResult<usize> {
+    fn myers_distance(
+        str_1: &str,
+        str_2: &str,
+        max_len: Option<usize>,
+        case_insensitive: Option<bool>,
+    ) -> PyResult<usize> {
         ferrisfuzz_core::myers::myers_distance(str_1, str_2, max_len, case_insensitive)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
     #[pyfunction]
     #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None))]
-    fn levenshtein_distance(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>) -> PyResult<usize> {
+    fn levenshtein_distance(
+        str_1: &str,
+        str_2: &str,
+        max_len: Option<usize>,
+        case_insensitive: Option<bool>,
+    ) -> PyResult<usize> {
         ferrisfuzz_core::levenshtein::levenshtein_distance(str_1, str_2, max_len, case_insensitive)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
     #[pyfunction]
-    #[pyo3(signature = (str_1, str_2, p=None, max_len=None, case_insensitive=None))]
-    fn jaro_winkler_distance(str_1: &str, str_2: &str, p: Option<f64>, max_len: Option<usize>, case_insensitive: Option<bool>) -> PyResult<f64> {
-        ferrisfuzz_core::jaro_winkler::jaro_winkler(str_1, str_2, p, max_len, case_insensitive)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+    #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None, score_cutoff=None))]
+    fn levenshtein_bp(
+        str_1: &str,
+        str_2: &str,
+        max_len: Option<usize>,
+        case_insensitive: Option<bool>,
+        score_cutoff: Option<usize>,      // FIXED: was `score_cuttoff` — kwarg names are public API
+    ) -> PyResult<usize> {
+        ferrisfuzz_core::levenshtein_bp::levenshtein_bp(str_1, str_2, max_len, case_insensitive, score_cutoff)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
     #[pyfunction]
     #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None))]
-    fn damerau(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>) -> PyResult<usize> {
+    fn damerau(
+        str_1: &str,
+        str_2: &str,
+        max_len: Option<usize>,
+        case_insensitive: Option<bool>,
+    ) -> PyResult<usize> {
         ferrisfuzz_core::damerau::damerau(str_1, str_2, max_len, case_insensitive)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
     #[pyfunction]
-    #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None, score_cuttoff= None))]
-    fn levenshtein_bp(str_1: &str, str_2: &str, max_len: Option<usize>, case_insensitive: Option<bool>, score_cuttoff: Option<usize>) -> PyResult<usize> {
-        ferrisfuzz_core::levenshtein_bp::levenshtein_bp(str_1, str_2, max_len, case_insensitive, score_cuttoff)
-        .map_err(|e|pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+    #[pyo3(signature = (str_1, str_2, max_len=None, case_insensitive=None, score_cutoff=None))]
+    fn damerau_bp(
+        str_1: &str,
+        str_2: &str,
+        max_len: Option<usize>,
+        case_insensitive: Option<bool>,
+        score_cutoff: Option<usize>,
+    ) -> PyResult<usize> {
+        ferrisfuzz_core::damerau_bp::damerau_bp(str_1, str_2, max_len, case_insensitive, score_cutoff)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
+    /// RENAMED from `jaro_winkler_distance`: it returns a SIMILARITY in [0, 1]
+    /// (1.0 = identical). Calling a similarity a distance is the exact confusion
+    /// the core's doc comment warns against — the binding must not reintroduce it.
+    /// Now wired to `jaro_winkler_opt` so `score_cutoff` (a similarity FLOOR)
+    /// is actually exposed to Python.
+    #[pyfunction]
+    #[pyo3(signature = (str_1, str_2, p=None, max_len=None, case_insensitive=None, score_cutoff=None))]
+    fn jaro_winkler_similarity(
+        str_1: &str,
+        str_2: &str,
+        p: Option<f64>,
+        max_len: Option<usize>,
+        case_insensitive: Option<bool>,
+        score_cutoff: Option<f64>,
+    ) -> PyResult<f64> {
+        ferrisfuzz_core::jaro_winkler_opt::jaro_winkler_opt(
+            str_1, str_2, p, max_len, case_insensitive, score_cutoff,
+        )
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+    }
 
-        const DETACH_THRESHOLD: usize = 10_000;
-    
-        #[pyfunction]
-        #[pyo3(signature = (query, candidates, case_insensitive=None))]
-        fn levenshtein_batch(
-            py: Python<'_>,
-            query: PyBackedStr,
-            candidates: Vec<PyBackedStr>,
-            case_insensitive: Option<bool>,
-        ) -> Vec<usize> {
-            // Read the length BEFORE moving `candidates` into the closure — once it's
-            // captured by `move`, the outer scope no longer owns it and can't inspect it.
-            let should_detach = candidates.len() >= DETACH_THRESHOLD;
-    
-            // One shared closure so the two paths do byte-identical work and can never
-            // drift apart. `move` captures query + candidates; both are PyBackedStr-
-            // backed, so this is sound to run with OR without the GIL.
-            let run = move || {
-                let q: &str = query.as_ref();
-                let refs: Vec<&str> = candidates.iter().map(|c| c.as_ref()).collect();
-                ferrisfuzz_core::levenshtein_batch::levenshtein_batch(q, &refs, case_insensitive)
-            };
-    
-            if should_detach {
-                // Large batch: compute dwarfs the ~104µs detach tax → release the GIL.
-                py.detach(run)
-            } else {
-                // Small batch: hold the GIL; skipping detach saves a tax bigger than
-                // the compute itself.
-                run()
-            }
-        }
-    
+    // ---------------------------------------------------------------
+    // Batch bindings — zero-copy ingestion (PyBackedStr), one shared
+    // `run` closure per fn, size-gated GIL detach.
+    // ---------------------------------------------------------------
 
+    const DETACH_THRESHOLD: usize = 10_000;
+
+    // FIXED: this fn appeared TWICE verbatim — duplicate deleted.
+    #[pyfunction]
+    #[pyo3(signature = (query, candidates, case_insensitive=None))]
+    fn levenshtein_batch(
+        py: Python<'_>,
+        query: PyBackedStr,
+        candidates: Vec<PyBackedStr>,
+        case_insensitive: Option<bool>,
+    ) -> Vec<usize> {
+        // Read the length BEFORE moving `candidates` into the closure.
+        let should_detach = candidates.len() >= DETACH_THRESHOLD;
+
+        // One shared closure so the detach / no-detach paths can never drift.
+        let run = move || {
+            let q: &str = query.as_ref();
+            let refs: Vec<&str> = candidates.iter().map(|c| c.as_ref()).collect();
+            ferrisfuzz_core::levenshtein_batch::levenshtein_batch(q, &refs, case_insensitive)
+        };
+
+        if should_detach { py.detach(run) } else { run() }
+    }
+
+    #[pyfunction]
+    #[pyo3(signature = (query, candidates, case_insensitive=None))]
+    fn damerau_batch(
+        py: Python<'_>,
+        query: PyBackedStr,
+        candidates: Vec<PyBackedStr>,
+        case_insensitive: Option<bool>,
+    ) -> Vec<usize> {
+        let should_detach = candidates.len() >= DETACH_THRESHOLD;
+
+        let run = move || {
+            let q: &str = query.as_ref();
+            let refs: Vec<&str> = candidates.iter().map(|c| c.as_ref()).collect();
+            ferrisfuzz_core::damerau_batch::damerau_batch(q, &refs, case_insensitive)
+        };
+
+        if should_detach { py.detach(run) } else { run() }
+    }
+
+    /// Differs from the other batches in ONE way: `new` validates `p`, so the
+    /// core returns Result and so does this binding. The Err is raised BEFORE
+    /// any detach decision matters (validation is instant), but the shared-run
+    /// shape is preserved: the closure returns Result, and we map it once,
+    /// after, on a single exit path.
+    #[pyfunction]
+    #[pyo3(signature = (query, candidates, p=None, case_insensitive=None))]
+    fn jaro_winkler_batch(
+        py: Python<'_>,
+        query: PyBackedStr,
+        candidates: Vec<PyBackedStr>,
+        p: Option<f64>,
+        case_insensitive: Option<bool>,
+    ) -> PyResult<Vec<f64>> {
+        let should_detach = candidates.len() >= DETACH_THRESHOLD;
+
+        let run = move || {
+            let q: &str = query.as_ref();
+            let refs: Vec<&str> = candidates.iter().map(|c| c.as_ref()).collect();
+            ferrisfuzz_core::jaro_winkler_batch::jaro_winkler_batch(q, &refs, p, case_insensitive)
+        };
+
+        let result = if should_detach { py.detach(run) } else { run() };
+        result.map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
+    }
+
+    // ---------------------------------------------------------------
+    // Boundary probes — kept under `_` names so the FFI-cost profile in
+    // the README stays reproducible. Not part of the public API.
+    // ---------------------------------------------------------------
+
+    #[pyfunction]
+    fn _ingest_owned(candidates: Vec<String>) -> usize {
+        candidates.len()
+    }
+
+    #[pyfunction]
+    fn _ingest_borrow(candidates: Vec<PyBackedStr>) -> usize {
+        candidates.len()
+    }
 
     #[pyfunction]
     fn _ingest_borrow_and_deref(candidates: Vec<PyBackedStr>) -> usize {
         let refs: Vec<&str> = candidates.iter().map(|c| c.as_ref()).collect();
-        refs.iter().map(|s| s.len()).sum()   // touch each &str, no edit-distance
-    }
-
-    #[pyfunction]
-    fn _ingest_owned(candidates: Vec<String>) -> usize {
-    candidates.len()
-}
-
-    // Borrows: PyBackedStr points at the Python string's bytes, no copy.
-    #[pyfunction]
-    fn _ingest_borrow(candidates: Vec<PyBackedStr>) -> usize {
-        candidates.len()
+        refs.iter().map(|s| s.len()).sum()
     }
 }

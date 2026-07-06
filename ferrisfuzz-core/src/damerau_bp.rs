@@ -53,7 +53,6 @@ pub fn damerau_bp(
 
 
 fn damerau_bp_small(query: &[char], target: &str, m: usize) -> usize {
-    // --- match table: IDENTICAL to levenshtein_bp_small ---
     // Direct-indexed vectors for chars < 256; BTreeMap fallback beyond.
     let mut ascii = [0u64; 256];
     let mut wide: BTreeMap<char, u64> = BTreeMap::new();
@@ -200,10 +199,6 @@ fn damerau_bp_multiword(query: &[char], target: &str, m: usize) -> usize {
 }
 
 fn damerau_bp_small_bytes(query: &[u8], target: &[u8], m: usize) -> usize {
-    // Match table: pure byte-indexed array. No BTreeMap, no char decode — every
-    // byte is < 256 by definition. This is the ONLY difference from damerau_bp_small;
-    // the transposition machinery below is identical (it works on bit-vectors, not
-    // on how the match vector was looked up).
     let mut peq = [0u64; 256];
     for (i, &b) in query.iter().enumerate() {
         peq[b as usize] |= 1u64 << i;
@@ -267,8 +262,6 @@ mod tests {
 
     #[test]
     fn bp_multiword_matches_classic() {
-        // Must exceed 64 chars to hit the multiword path. Include transpositions,
-        // and critically one NEAR position 64 to stress the cross-word carry.
         let a = "the quick brown fox jumps over the lazy dog then runs home quickly xy";
         let b = "the quick brown fox jumps over the lazy dog then runs home quickly yx"; // xy->yx swap at the end (pos 65)
         assert_eq!(
@@ -276,7 +269,6 @@ mod tests {
             damerau_classic(a, b, None, None).unwrap()
         );
 
-        // A few more: long identical, long with mid transposition, long with edits.
         let base: String = "abcdefghij".repeat(8); // 80 chars
         let mut swapped: Vec<char> = base.chars().collect();
         swapped.swap(63, 64); // transposition EXACTLY across the word boundary — the danger spot

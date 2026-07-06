@@ -2,17 +2,7 @@ use alloc::vec::Vec;
 use alloc::vec;
 use crate::common::{MatchError, check_len, normalize};
 
-/// Jaro-Winkler SIMILARITY in [0.0, 1.0] (1.0 = identical). Note: a *similarity*,
-/// not a distance — hence f64, not usize.
-///
-/// `p` is the Winkler prefix weight (default 0.1; must be in [0.0, 0.25]).
-/// `score_cutoff` is a similarity FLOOR: if the result would be below it, return
-/// 0.0 early. (Similarity cutoff = floor; the opposite sense to a distance ceiling.)
-///
-/// Shape: forked on ASCII, NOT on a 64-char word boundary. Jaro isn't bit-parallel,
-/// so there's no `u64` packing and no small/multiword split. The only meaningful
-/// fork is ASCII-fast (zero-alloc, byte + u64 match-bitmask) vs the general
-/// char-based fallback.
+
 pub fn jaro_winkler(
     str_1: &str,
     str_2: &str,
@@ -57,7 +47,6 @@ pub fn jaro_winkler(
         jaro_winkler_general(s1.as_ref(), s2.as_ref(), p)
     };
 
-    // Similarity cutoff is a FLOOR: below it, report 0.0.
     if let Some(floor) = score_cutoff {
         if sim < floor {
             return Ok(0.0);
@@ -72,10 +61,9 @@ fn jaro_winkler_ascii_fast(a: &[u8], b: &[u8], p: f64) -> f64 {
     let m = a.len();
     let n = b.len();
  
-    // Match window (same formula as the general path).
+
     let window = (m.max(n) / 2).saturating_sub(1);
  
-    // ★ The bitmasks replace vec![false; m] and vec![false; n]. Zero allocation.
     let mut m1: u64 = 0; // which positions in `a` matched
     let mut m2: u64 = 0; // which positions in `b` matched
     let mut matches = 0usize;
@@ -85,15 +73,12 @@ fn jaro_winkler_ascii_fast(a: &[u8], b: &[u8], p: f64) -> f64 {
         let end = (i + window + 1).min(n);
  
         for j in start..end {
-            // "is b[j] already claimed?"  →  test bit j of m2
             if m2 & (1u64 << j) != 0 {
                 continue;
             }
-            // "do the characters match?"  →  direct byte compare (no decode)
             if a[i] != b[j] {
                 continue;
             }
-            // claim both positions: set bit i of m1, bit j of m2
             m1 |= 1u64 << i;
             m2 |= 1u64 << j;
             matches += 1;
@@ -105,34 +90,23 @@ fn jaro_winkler_ascii_fast(a: &[u8], b: &[u8], p: f64) -> f64 {
         return 0.0;
     }
  
-    // --- transposition count ---
-    // Walk matched positions of `a` in order; for each, advance to the next matched
-    // position of `b`. If the paired characters differ, that's a half-transposition.
-    // Same logic as the general path, but "is k matched?" is a bit test on m2.
-    let mut transpositions = 0usize;
+    let mut half_transpositions = 0usize;
     let mut k = 0usize;
     for i in 0..m {
         if m1 & (1u64 << i) == 0 {
-            continue; // a[i] wasn't matched
+            continue; 
         }
-        // advance k to the next matched position in b
+
         while m2 & (1u64 << k) == 0 {
             k += 1;
         }
         if a[i] != b[k] {
-            transpositions += 1;
+            half_transpositions += 1;
         }
         k += 1;
     }
  
-    // --- Jaro similarity ---
-    let m_f = matches as f64;
-    let jaro = (m_f / m as f64
-        + m_f / n as f64
-        + (m_f - transpositions as f64 / 2.0) / m_f)
-        / 3.0;
  
-    // --- Winkler prefix bonus (up to 4 leading chars that match) ---
     let mut prefix = 0usize;
     for idx in 0..m.min(n).min(4) {
         if a[idx] == b[idx] {
@@ -142,14 +116,9 @@ fn jaro_winkler_ascii_fast(a: &[u8], b: &[u8], p: f64) -> f64 {
         }
     }
  
-    jaro + (prefix as f64 * p * (1.0 - jaro))
+    jaro_to_winkler(matches, half_transpositions, m, n, prefix, p)
 }
 
-/// STUB — general fallback (non-ASCII or > 64 chars).
-/// This will be your CURRENT, working jaro_winkler body: chars() + Vec<bool> match
-/// arrays. It's the correctness oracle the fast path is crosschecked against, so
-/// keep it exactly as your tested version (just returning the bare f64, no Result —
-/// the entry fn owns validation now).
 fn jaro_winkler_general(a: &str, b: &str, p: f64) -> f64 {
     let chars_1: Vec<char> = a.chars().collect();
     let chars_2: Vec<char> = b.chars().collect();
@@ -165,7 +134,6 @@ fn jaro_winkler_general(a: &str, b: &str, p: f64) -> f64 {
     let mut str2_matches = vec![false; n];
     let mut matches = 0usize;
  
-    // --- Phase 1: windowed match scan ---
     for i in 0..m {
         let start = i.saturating_sub(window);
         let end = (i + window + 1).min(n);
@@ -188,10 +156,7 @@ fn jaro_winkler_general(a: &str, b: &str, p: f64) -> f64 {
         return 0.0; // also guards the divide-by-matches below
     }
  
-    // --- Phase 2: transposition count ---
-    // Walk matched positions of `a` in order; pair each with the next matched
-    // position of `b`. Differing pairs are half-transpositions.
-    let mut transpositions = 0usize;
+    let mut half_transpositions = 0usize;
     let mut k = 0usize;
     for i in 0..m {
         if !str1_matches[i] {
@@ -201,32 +166,22 @@ fn jaro_winkler_general(a: &str, b: &str, p: f64) -> f64 {
             k += 1;
         }
         if chars_1[i] != chars_2[k] {
-            transpositions += 1;
+            half_transpositions += 1;
         }
         k += 1;
     }
  
-    // --- Phase 3: Jaro similarity ---
-    let m_f = matches as f64;
-    let jaro = (m_f / m as f64
-        + m_f / n as f64
-        + (m_f - transpositions as f64 / 2.0) / m_f)
-        / 3.0;
- 
-    // --- Winkler prefix bonus (up to 4 leading matching chars) ---
+
     let prefix = chars_1
         .iter()
         .zip(chars_2.iter())
         .take(4)
         .take_while(|(x, y)| x == y)
-        .count() as f64;
+        .count();
  
-    jaro + (prefix * p * (1.0 - jaro))
+    jaro_to_winkler(matches, half_transpositions, m, n, prefix, p)
 }
 
-/// Bit-parallel ASCII path. Same greedy semantics as `jaro_winkler_general`
-/// (outer over `a`, claim earliest unclaimed `j` in `b`) — only the inner
-/// window scan is replaced by mask arithmetic.
 fn jaro_winkler_ascii_bp(a: &[u8], b: &[u8], p: f64) -> f64 {
     let m = a.len();
     let n = b.len();
@@ -249,27 +204,20 @@ fn jaro_winkler_ascii_bp(a: &[u8], b: &[u8], p: f64) -> f64 {
     let mut mask: u64 = (1u64 << (window + 1)) - 1;
 
     for i in 0..m {
-        // Your entire inner loop, in one expression:
-        //   positions where b[j] == a[i]   AND  inside window  AND  unclaimed
         let pm = peq[a[i] as usize] & mask & !m2;
 
         m2 |= pm & pm.wrapping_neg();        // claim the EARLIEST (blsi); 0 claims nothing
         m1 |= u64::from(pm != 0) << i;       // did a[i] match anything?
 
-        // Advance the window for i+1: lower edge pinned at 0 while i < window
-        // (grow), then both edges slide together.
         mask = if i < window { (mask << 1) | 1 } else { mask << 1 };
     }
 
     let matches = m1.count_ones() as usize;
-    debug_assert_eq!(m1.count_ones(), m2.count_ones()); // every claim sets one bit in each
+    debug_assert_eq!(m1.count_ones(), m2.count_ones()); 
     if matches == 0 {
         return 0.0;
     }
 
-    // Transposition walk — identical pairing logic to your current version
-    // (k-th matched of a vs k-th matched of b), but iterating SET BITS ONLY
-    // instead of testing every position.
     let mut transpositions = 0usize;
     let (mut x, mut y) = (m1, m2);
     while x != 0 {
@@ -286,16 +234,20 @@ fn jaro_winkler_ascii_bp(a: &[u8], b: &[u8], p: f64) -> f64 {
     jaro_to_winkler(matches, transpositions, m, n, prefix, p)
 }
 
-/// Shared scoring tail — one definition, used by every path (your brief's
-/// "define shared logic once" rule; three hand-copied Jaro formulas WILL drift).
+
 #[inline]
-pub fn jaro_to_winkler(matches: usize, transpositions: usize, m: usize, n: usize, prefix: usize, p: f64) -> f64 {
+pub fn jaro_to_winkler(matches: usize, half_transpositions: usize, m: usize, n: usize, prefix: usize, p: f64) -> f64 {
+    let transpositions = half_transpositions / 2;   // floored, matching rapidfuzz
     let m_f = matches as f64;
     let jaro = (m_f / m as f64
         + m_f / n as f64
-        + (m_f - transpositions as f64 / 2.0) / m_f)
+        + (m_f - transpositions as f64) / m_f)
         / 3.0;
-    jaro + (prefix as f64 * p * (1.0 - jaro))
+    if jaro > 0.7 {                                  // Winkler boost threshold
+        jaro + (prefix as f64 * p * (1.0 - jaro))
+    } else {
+        jaro
+    }
 }
 
 #[cfg(test)]
@@ -306,13 +258,6 @@ mod tests {
 
     fn approx(a: f64, b: f64) -> bool { (a - b).abs() < 1e-3 }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LAYER 1 — ANCHORS. Published Jaro-Winkler values (EXTERNAL ground truth).
-    // Why: Layer 2 only proves the paths AGREE. If all three agreed on a wrong
-    // number, only these anchors would catch it. Verify these constants against
-    // your already-proven general path if any fails — trust general, it hit the
-    // textbook values when you built it.
-    // ─────────────────────────────────────────────────────────────────────
     #[test]
     fn anchor_textbook_values() {
         let cases = [
@@ -328,14 +273,6 @@ mod tests {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LAYER 2 — PARITY FUZZ, hitting BOTH fast bands.
-    // You have THREE paths: _ascii_fast (<=16), _ascii_bp (17..=64), _general.
-    // A single fuzz could accidentally test only one band. So we run two fuzz
-    // loops with length ranges that pin each fast path against the oracle.
-    // Small alphabet + forced adjacent swaps = transposition-DENSE (the only
-    // inputs that catch a bad transposition count).
-    // ─────────────────────────────────────────────────────────────────────
     fn fuzz_band(iters: usize, min_len: usize, span: u64, seed0: u64) {
         let mut seed = seed0;
         let mut rng = || { seed ^= seed << 13; seed ^= seed >> 7; seed ^= seed << 17; seed };
@@ -361,8 +298,6 @@ mod tests {
     #[test]
     fn fuzz_bp_band()     { fuzz_band(40_000, 17, 48, 0x9E37_79B9_7F4A_7C15); } // → _ascii_bp
 
-    // Direct fast-vs-bp cross: both fast paths must agree with each other too,
-    // on the overlap of inputs they can both legally handle (<=16, ascii).
     #[test]
     fn fast_and_bp_agree_on_overlap() {
         let mut seed = 0xDEAD_BEEF_CAFE_1234u64;
@@ -378,10 +313,6 @@ mod tests {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LAYER 3 — BOUNDARY LENGTHS. Where the u64 mask + band gates are fragile:
-    // the 16/17 fast-vs-bp seam, and the 64/65 bp-vs-general seam.
-    // ─────────────────────────────────────────────────────────────────────
     #[test]
     fn boundary_lengths_match_general() {
         for &len in &[1usize, 15, 16, 17, 32, 63, 64, 65, 80] {
@@ -395,9 +326,6 @@ mod tests {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LAYER 4 — DEGENERATE / EDGE INPUTS. Pin the contract at the corners.
-    // ─────────────────────────────────────────────────────────────────────
     #[test]
     fn edge_cases() {
         assert_eq!(jaro_winkler("", "", None, None, None, None).unwrap(), 1.0);
@@ -409,11 +337,6 @@ mod tests {
         assert_eq!(jaro_winkler("a", "b", None, None, None, None).unwrap(), 0.0);
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LAYER 5 — ASCII vs NON-ASCII FORK. Non-ASCII MUST route to general and
-    // stay correct (byte-indexing would be wrong for multibyte chars). CJK
-    // included so a byte-path leak fails loudly.
-    // ─────────────────────────────────────────────────────────────────────
     #[test]
     fn non_ascii_routes_correctly() {
         let pairs = [
@@ -428,10 +351,6 @@ mod tests {
         assert_eq!(jaro_winkler("café", "café", None, None, None, None).unwrap(), 1.0);
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LAYER 6 — OPTIONS. Entry-function plumbing: case fold, prefix weight p,
-    // max_len. Independent of the core algorithm.
-    // ─────────────────────────────────────────────────────────────────────
     #[test]
     fn case_insensitive_folds() {
         assert_eq!(jaro_winkler("MARTHA", "martha", None, None, Some(true), None).unwrap(), 1.0);
@@ -455,10 +374,6 @@ mod tests {
         assert!(jaro_winkler(&long, "a", Some(10.0), None, None, None).is_err());
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LAYER 7 — score_cutoff FLOOR semantics (similarity, not distance).
-    // Below the floor ⇒ 0.0; at/above ⇒ the real value.
-    // ─────────────────────────────────────────────────────────────────────
     #[test]
     fn score_cutoff_is_a_floor() {
         // martha/marhta ≈ 0.961: a floor of 0.99 should suppress it to 0.0…
@@ -467,4 +382,19 @@ mod tests {
         let v = jaro_winkler("martha", "marhta", None, None, None, Some(0.90)).unwrap();
         assert!(v > 0.90);
     }
+
+    #[test]
+fn winkler_semantics_regressions() {
+    // Boost threshold: jaro = 5/9 <= 0.7, so NO prefix bonus (was 0.6 pre-fix).
+    let sim = jaro_winkler("teh", "the", None, None, None, None).unwrap();
+    assert!((sim - 5.0 / 9.0).abs() < 1e-9);
+
+    // Floored transpositions: pinned against rapidfuzz's value for this pair.
+    let sim = jaro_winkler(
+        "the quick brown fox jumps over the lazy dog",
+        "the slow green fox jumped over the lazy cat",
+        None, None, None, None,
+    ).unwrap();
+    assert!((sim - 0.8398671096345515).abs() < 1e-9);
+}
 }

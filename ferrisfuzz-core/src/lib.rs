@@ -1,7 +1,5 @@
 #![no_std]
 
-//! Classic O(mn) dynamic-programming reference. Not part of the public API —
-//! retained as the crosscheck oracle that proves the bit-parallel path correct.
 
 extern crate alloc;
 pub mod levenshtein;

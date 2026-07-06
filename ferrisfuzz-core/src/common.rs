@@ -9,11 +9,11 @@ use alloc::string::String;
 pub enum MatchError {
     /// One input exceeded the configured character cap.
     InputTooLong { which: &'static str, len: usize, limit: usize },
+    /// Only relevant to jaro-winkler
     InvalidPrefixScale {value: f64},
 }
 
 impl MatchError {
-    /// Human-readable message (handy when mapping to a Python exception).
     pub fn message(&self) -> String {
         match self {
             MatchError::InputTooLong { which, len, limit } => {
@@ -26,11 +26,7 @@ impl MatchError {
     }
 }
 
-/// Opt-in case folding, done ONCE here — never per character in a loop.
-///
-/// Case-sensitive (the default) returns `Cow::Borrowed`: zero allocation, points
-/// straight at the caller's string. Only case-insensitive allocates the single
-/// lowercased copy. This mirrors rapidfuzz's "no preprocessing unless asked".
+// All no-op if criteria is not met
 #[inline]
 pub fn normalize(s: &str, case_insensitive: Option<bool>) -> Cow<'_, str> {
     if case_insensitive.unwrap_or(false) {
@@ -40,7 +36,7 @@ pub fn normalize(s: &str, case_insensitive: Option<bool>) -> Cow<'_, str> {
     }
 }
 
-/// Opt-in length cap. A no-op when `max_len` is `None`.
+
 #[inline]
 pub fn check_len(len: usize, max_len: Option<usize>, which: &'static str) -> Result<(), MatchError> {
     if let Some(limit) = max_len {
@@ -51,9 +47,7 @@ pub fn check_len(len: usize, max_len: Option<usize>, which: &'static str) -> Res
     Ok(())
 }
 
-/// Apply score-cutoff semantics to a final distance: if it exceeds the cutoff,
-/// report `cutoff + 1` (rapidfuzz's convention) rather than the exact value.
-/// A no-op when `score_cutoff` is `None`.
+
 #[inline]
 pub fn apply_cutoff(score: usize, score_cutoff: Option<usize>) -> usize {
     match score_cutoff {

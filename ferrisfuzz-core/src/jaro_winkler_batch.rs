@@ -4,15 +4,6 @@ use crate::common::MatchError;
 use crate::jaro_winkler::{jaro_winkler, jaro_to_winkler};
 
 /// Compile-once Jaro-Winkler scorer: one query vs many targets.
-///
-/// What's hoisted to construction: `p` validation, case-folding of the query,
-/// and the 1 KiB `peq` table build — the exact cost that makes single-pair
-/// bit-parallel lose on short strings. Amortized here, the bp scan wins at
-/// every length, so the fast lane has NO small/large split.
-///
-/// ORIENTATION NOTE: `peq` is built over the QUERY (single-pair builds it over
-/// the second string). Jaro is symmetric so the result is identical — a claim
-/// the fuzz test below verifies rather than assumes.
 pub struct JaroWinklerBatch {
     peq: [u64; 128],          // ASCII fast lane only; folded if case-insensitive
     query_folded: Vec<u8>,    // folded query bytes — the scan/walk/prefix universe
@@ -43,9 +34,6 @@ impl JaroWinklerBatch {
         let mut peq = [0u64; 128];
         let mut query_folded = Vec::new();
         if fast_lane {
-            // NOT the Damerau both-cases trick: Jaro re-compares characters in
-            // the transposition walk and prefix count, so everything must live
-            // in ONE folded universe. Fold the query here; fold targets on read.
             query_folded = query
                 .bytes()
                 .map(|b| if ci { b.to_ascii_lowercase() } else { b })
@@ -97,8 +85,6 @@ impl JaroWinklerBatch {
                 return 0.0;
             }
 
-            // Transposition walk: k-th matched target char vs k-th matched
-            // query char — folded on both sides (Trap 1 lives right here).
             let mut transpositions = 0usize;
             let (mut x, mut y) = (mt, mq);
             while x != 0 {
@@ -144,9 +130,9 @@ mod tests {
 
     const QUERY: &str = "martha";
     const WORDS: &[&str] = &[
-        "marhta", "martha", "marta", "amrtha",           // transposition-heavy
+        "marhta", "martha", "marta", "amrtha",           
         "sitting", "kitten", "", "m", "MARTHA", "MaRhTa",
-        "café",                                           // non-ASCII → fallback
+        "café",                                           
     ];
 
     // f64 results: epsilon comparison, never assert_eq!.
@@ -193,11 +179,6 @@ mod tests {
         assert!(JaroWinklerBatch::new(QUERY, Some(0.5), None).is_err());
     }
 
-    // THE LOAD-BEARING TEST. The batch scan runs in the OPPOSITE orientation to
-    // single-pair (peq over query vs peq over target). Greedy matching from
-    // opposite sides *should* agree — this proves it does, on 20k adversarial
-    // pairs. Small alphabet (% 5) so matches and transpositions are constant;
-    // forced adjacent swaps so the transposition count actually gets exercised.
     #[test]
     fn fuzz_batch_matches_singlepair() {
         let mut seed = 0x1234_5678u64;

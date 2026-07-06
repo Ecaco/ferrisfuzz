@@ -11,6 +11,9 @@ pub enum JaroWinklerError {
     InputTooLong(String),
 }
 
+// Deliberately does NOT call jaro_to_winkler: this function is the
+// correctness oracle for the fast paths, and an oracle that shares code
+// with what it checks cannot catch bugs in the shared part.
 pub fn jaro_winkler_classic(str_1: &str, str_2: &str, p: Option<f64>, max_len: Option<usize>, case_insensitive: Option<bool> ) -> Result<f64, JaroWinklerError> {
     // Guards
     let limit = max_len.unwrap_or(100_000); // Linear so can be generous
@@ -107,6 +110,10 @@ pub fn jaro_winkler_classic(str_1: &str, str_2: &str, p: Option<f64>, max_len: O
         k += 1;
     }
 
+    // floor half-transpositions to whole transpositions BEFORE the float
+    // arithmetic (integer division), matching rapidfuzz's calculate_similarity
+    let transpositions = transpositions / 2;
+
     //casting for end result
     let m = m as f64;
     let n = n as f64;
@@ -117,8 +124,8 @@ pub fn jaro_winkler_classic(str_1: &str, str_2: &str, p: Option<f64>, max_len: O
     if matches == 0.0 {
     return Ok(0.0);
 }
-    // jaro part: 
-    let jaro = (matches/m + matches/n + (matches - transpositions/2.0) /matches) / 3.0;
+    // jaro part: (transpositions already floored and halved above)
+    let jaro = (matches/m + matches/n + (matches - transpositions) /matches) / 3.0;
 
     // winkler part: 
     let prefix = chars_1.iter()
@@ -127,8 +134,12 @@ pub fn jaro_winkler_classic(str_1: &str, str_2: &str, p: Option<f64>, max_len: O
     .take_while(|(a, b)| a == b)
     .count() as f64;
 
-    // combined
-    let jaro_winkler_classic = jaro + (prefix * p * (1.0 - jaro));
+    // combined — Winkler bonus only above the 0.7 boost threshold (raw jaro, strictly greater)
+    let jaro_winkler_classic = if jaro > 0.7 {
+        jaro + (prefix * p * (1.0 - jaro))
+    } else {
+        jaro
+    };
 
     Ok(jaro_winkler_classic)
     

@@ -5,14 +5,6 @@ use alloc::collections::BTreeMap;
 
 use crate::common::{normalize, check_len, apply_cutoff, MatchError};
 
-/// Bit-parallel Levenshtein (Myers' algorithm).
-///
-/// Every option below is opt-in and costs nothing on the default path:
-/// - `max_len`: reject inputs longer than this many chars (`None` ⇒ no cap).
-/// - `case_insensitive`: lowercase both inputs once, up front (`None` ⇒ false, borrows).
-/// - `score_cutoff`: if the distance would exceed this, return `cutoff + 1` and,
-///   where provable up front, skip the computation entirely (`None` ⇒ exact distance).
-
 
 pub fn levenshtein_bp(
     str_1: &str,
@@ -182,7 +174,7 @@ fn levenshtein_bp_small_bytes(query: &[u8], target: &[u8], m: usize) -> usize {
     let mask = 1u64 << (m - 1);
  
     for &b in target.iter() {
-        let eq = peq[b as usize]; // single load, no decode, no branch
+        let eq = peq[b as usize]; 
  
         let xh = ((eq & pv).wrapping_add(pv)) ^ pv;
         let x  = xh | eq;

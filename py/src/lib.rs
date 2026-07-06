@@ -62,7 +62,6 @@ mod ferrisfuzz {
 
     const DETACH_THRESHOLD: usize = 10_000;
 
-    // FIXED: this fn appeared TWICE verbatim — duplicate deleted.
     #[pyfunction]
     #[pyo3(signature = (query, candidates, case_insensitive=None))]
     fn levenshtein_batch(
@@ -71,10 +70,8 @@ mod ferrisfuzz {
         candidates: Vec<PyBackedStr>,
         case_insensitive: Option<bool>,
     ) -> Vec<usize> {
-        // Read the length BEFORE moving `candidates` into the closure.
         let should_detach = candidates.len() >= DETACH_THRESHOLD;
 
-        // One shared closure so the detach / no-detach paths can never drift.
         let run = move || {
             let q: &str = query.as_ref();
             let refs: Vec<&str> = candidates.iter().map(|c| c.as_ref()).collect();
@@ -103,11 +100,6 @@ mod ferrisfuzz {
         if should_detach { py.detach(run) } else { run() }
     }
 
-    /// Differs from the other batches in ONE way: `new` validates `p`, so the
-    /// core returns Result and so does this binding. The Err is raised BEFORE
-    /// any detach decision matters (validation is instant), but the shared-run
-    /// shape is preserved: the closure returns Result, and we map it once,
-    /// after, on a single exit path.
     #[pyfunction]
     #[pyo3(signature = (query, candidates, p=None, case_insensitive=None))]
     fn jaro_winkler_batch(
@@ -129,10 +121,6 @@ mod ferrisfuzz {
         result.map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{:?}", e)))
     }
 
-    // ---------------------------------------------------------------
-    // Boundary probes — kept under `_` names so the FFI-cost profile in
-    // the README stays reproducible. Not part of the public API.
-    // ---------------------------------------------------------------
 
     #[pyfunction]
     fn _ingest_owned(candidates: Vec<String>) -> usize {

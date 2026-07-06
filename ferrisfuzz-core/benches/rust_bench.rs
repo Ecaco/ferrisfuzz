@@ -1,11 +1,7 @@
-
 use criterion::{
-    black_box, criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion, Throughput,
+    black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput,
 };
 
-// ---------------------------------------------------------------------------
-// IMPORT BLOCK — the only place name-guesses live.
-// ---------------------------------------------------------------------------
 use ferrisfuzz_core::levenshtein::levenshtein_distance_classic;
 use ferrisfuzz_core::levenshtein_bp::levenshtein_bp;
 use ferrisfuzz_core::damerau::damerau_classic;
@@ -20,12 +16,7 @@ use rapidfuzz::distance::jaro_winkler as rf_jw;
 use rapidfuzz::distance::levenshtein as rf_lev;
 use rapidfuzz::distance::osa as rf_osa;
 
-// ---------------------------------------------------------------------------
-// Fixed inputs. Three ASCII length classes:
-//   SHORT  — 6/7 chars: table-setup dominates; small-string territory.
-//   MEDIUM — 15 chars:  sits ON the <=16 JW dispatch boundary, deliberately.
-//   LONG   — 44 chars:  wide-window bp, still one u64 word.
-// ---------------------------------------------------------------------------
+
 const SHORT: (&str, &str) = ("kitten", "sitting");
 const MEDIUM: (&str, &str) = ("acknowledgement", "acknowledgments");
 const LONG: (&str, &str) = (
@@ -38,8 +29,7 @@ const PAIRS: [(&str, (&str, &str)); 3] =
 const QUERY: &str = "kitten";
 const BATCH_SIZES: [usize; 3] = [100, 1_000, 10_000];
 
-/// Near-query ASCII words with sprinkled adjacent swaps (exercises OSA's
-/// transposition term and Jaro's transposition walk). Deterministic.
+
 fn make_candidates(n: usize) -> Vec<String> {
     let bases = ["kitten", "sitting", "mitten", "kitchen", "bitten", "written"];
     (0..n)
@@ -110,7 +100,9 @@ fn bench_single_jaro_winkler(c: &mut Criterion) {
             })
         });
         g.bench_with_input(BenchmarkId::new("ours-classic", label), &(a, b), |ben, &(a, b)| {
-            ben.iter(|| jaro_winkler_classic(black_box(a), black_box(b), Some(0.1), None, None))
+            ben.iter(|| {
+                jaro_winkler_classic(black_box(a), black_box(b), Some(0.1), None, None).unwrap()
+            })
         });
         g.bench_with_input(BenchmarkId::new("rapidfuzz-chars", label), &(a, b), |ben, &(a, b)| {
             ben.iter(|| rf_jw::similarity(black_box(a).chars(), black_box(b).chars()))
@@ -123,9 +115,9 @@ fn bench_single_jaro_winkler(c: &mut Criterion) {
 }
 
 // ---------------------------------------------------------------------------
-// Batch. Barrier discipline: inputs black_boxed ONCE entering the closure,
-// output ONCE leaving it. The candidate loop itself is barrier-free — that's
-// the code shape a real caller has, for us AND for rapidfuzz.
+// Batch. Barrier discipline: inputs black_boxed once entering the closure,
+// output once leaving it. No barriers inside the candidate loop — for us OR
+// for rapidfuzz.
 // ---------------------------------------------------------------------------
 
 fn bench_batch_levenshtein(c: &mut Criterion) {
@@ -151,7 +143,7 @@ fn bench_batch_levenshtein(c: &mut Criterion) {
         let ours = LevenshteinBatch::new(QUERY, None);
         g.bench_function(BenchmarkId::new("ours", "score-only"), |b| {
             b.iter(|| {
-                let cands = black_box(&cands); // barrier once — NOT per element
+                let cands = black_box(&cands);
                 let out: Vec<usize> = cands.iter().map(|t| ours.distance(t)).collect();
                 black_box(out)
             })
@@ -159,29 +151,11 @@ fn bench_batch_levenshtein(c: &mut Criterion) {
         let rf = rf_lev::BatchComparator::new(QUERY.chars());
         g.bench_function(BenchmarkId::new("rapidfuzz", "score-only"), |b| {
             b.iter(|| {
-                let cands = black_box(&cands); // same discipline for the opponent
+                let cands = black_box(&cands);
                 let out: Vec<usize> = cands.iter().map(|t| rf.distance(t.chars())).collect();
                 black_box(out)
             })
         });
-
-        // PROBE (10k only): scorer OWNED by the timed closure, construction
-        // untimed. Distinguishes ownership effects from cross-crate call cost.
-        // Remove once the score-only vs compile+score gap is explained.
-        if n == 10_000 {
-            g.bench_function(BenchmarkId::new("ours", "score-only-owned"), |b| {
-                b.iter_batched(
-                    || LevenshteinBatch::new(QUERY, None),
-                    |scorer| {
-                        let cands = black_box(&cands);
-                        let out: Vec<usize> =
-                            cands.iter().map(|t| scorer.distance(t)).collect();
-                        black_box(out)
-                    },
-                    BatchSize::SmallInput,
-                )
-            });
-        }
 
         g.finish();
     }
@@ -257,6 +231,14 @@ fn bench_batch_jaro_winkler(c: &mut Criterion) {
             b.iter(|| {
                 let cands = black_box(&cands);
                 let out: Vec<f64> = cands.iter().map(|t| ours.similarity(t)).collect();
+                black_box(out)
+            })
+        });
+        let rf = rf_jw::BatchComparator::new(QUERY.chars());
+        g.bench_function(BenchmarkId::new("rapidfuzz", "score-only"), |b| {
+            b.iter(|| {
+                let cands = black_box(&cands);
+                let out: Vec<f64> = cands.iter().map(|t| rf.similarity(t.chars())).collect();
                 black_box(out)
             })
         });

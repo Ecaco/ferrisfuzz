@@ -6,7 +6,7 @@ description = "Fast no_std string similarity: Levenshtein, OSA, Jaro-Winkler, bi
 readme = "README.md"
 repository= "https://github.com/Ecaco/ferrisfuzz"
 license = "MIT OR Apache-2.0"
-keywords = ["levenshtein", "jaro-winkler", "fuzzy", "no_std", "similarity", "text-processing", "no-std", "algorithms"]
+keywords = ["levenshtein", "jaro-winkler", "no_std", "similarity", "text-processing"]
 
 [[bench]]
 name = "rust_bench"

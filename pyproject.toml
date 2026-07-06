@@ -6,7 +6,7 @@ build-backend = "maturin"
 name = "ferrisfuzz"
 requires-python = ">=3.8"
 description = "Fast Rust string similarity: Levenshtein, OSA, Jaro-Winkler, bit-parallel"
-readme = "py/README.MD"
+readme = "py/README.md"
 authors = [{ name = "Ecaco" }]
 license = "MIT OR Apache-2.0"
 classifiers = [
@@ -21,3 +21,6 @@ Repository = "https://github.com/Ecaco/ferrisfuzz"
 
 [tool.maturin]
 manifest-path = "py/Cargo.toml"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

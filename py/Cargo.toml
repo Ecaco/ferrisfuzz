@@ -2,7 +2,7 @@
 name = "py"
 version = "0.1.0"
 edition = "2024"
-readme = "README.MD"
+readme = "README.md"
 description = "Fast Rust string similarity: Levenshtein, OSA, Jaro-Winkler, bit-parallel"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Ecaco/ferrisfuzz"

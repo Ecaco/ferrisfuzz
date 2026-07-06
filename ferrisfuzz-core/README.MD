@@ -23,7 +23,7 @@ Batch (one query × 10,000 candidates, score-only, Melem/s): levenshtein
 
 rapidfuzz's byte API wins at some short/medium lengths if you can forfeit
 Unicode handling — full tables, losses included, in
-[BENCHMARKS.md](https://github.com/YOURUSER/ferrisfuzz/blob/main/BENCHMARKS.md).
+[BENCHMARKS.md](https://github.com/Ecaco/ferrisfuzz/BENCHMARKS.md).
 
 Jaro-Winkler semantics match rapidfuzz exactly (Winkler 0.7 boost
 threshold, floored transpositions) — enforced by a hard parity gate on

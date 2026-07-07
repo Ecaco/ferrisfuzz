@@ -5,8 +5,8 @@
 [![PyPI](https://img.shields.io/pypi/v/ferrisfuzz.svg)](https://pypi.org/project/ferrisfuzz/)
 [![docs.rs](https://img.shields.io/docsrs/ferrisfuzz-core)](https://docs.rs/ferrisfuzz-core)
 
-Fast string similarity metrics — Levenshtein, Damerau (OSA), and
-Jaro-Winkler — for Rust and Python. Pure `no_std` Rust core with zero
+Fast string similarity metrics: Levenshtein, Damerau (OSA), and
+Jaro-Winkler. For Rust and Python. Pure `no_std` Rust core with zero
 dependencies; bit-parallel single-pair and compile-once batch APIs;
 faster than rapidfuzz-rs in our benchmarks, with Jaro-Winkler semantics
 locked to rapidfuzz and enforced by a hard parity gate on every commit.

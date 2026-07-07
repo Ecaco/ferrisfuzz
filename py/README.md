@@ -1,11 +1,16 @@
 # ferrisfuzz
 
+[![CI](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml/badge.svg)](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/ferrisfuzz-core.svg)](https://crates.io/crates/ferrisfuzz-core)
+[![docs.rs](https://img.shields.io/docsrs/ferrisfuzz-core)](https://docs.rs/ferrisfuzz-core)
+[![PyPI](https://img.shields.io/pypi/v/ferrisfuzz.svg)](https://pypi.org/project/ferrisfuzz/)
+
 Python bindings for [`ferrisfuzz-core`](https://github.com/Ecaco/ferrisfuzz) —
 fast string similarity metrics (Levenshtein, Damerau/OSA, and Jaro-Winkler)
 backed by a pure `no_std` Rust core with zero dependencies. Bit-parallel
 single-pair scoring and GIL-releasing batch APIs, faster than the rapidfuzz
 Python package across most inputs in our benchmarks, with the Python↔Rust
-boundary measured — not guessed.
+boundary measured.
 
 ## Benchmarks
 

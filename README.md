@@ -1,6 +1,6 @@
 # ferrisfuzz
 
-[![CI](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml/badge.svg)](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml)
+[![CI](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml/badge.svg)](https://github.com/Ecaco/ferrisfuzz/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/ferrisfuzz-core.svg)](https://crates.io/crates/ferrisfuzz-core)
 [![PyPI](https://img.shields.io/pypi/v/ferrisfuzz.svg)](https://pypi.org/project/ferrisfuzz/)
 [![docs.rs](https://img.shields.io/docsrs/ferrisfuzz-core)](https://docs.rs/ferrisfuzz-core)
@@ -15,6 +15,7 @@ locked to rapidfuzz and enforced by a hard parity gate on every commit.
 
 ```
 cargo add ferrisfuzz-core
+```
 ```
 pip install ferrisfuzz
 ```

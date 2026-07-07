@@ -1,3 +1,25 @@
+# ferrisfuzz
+
+[![CI](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml/badge.svg)](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/ferrisfuzz-core.svg)](https://crates.io/crates/ferrisfuzz-core)
+[![PyPI](https://img.shields.io/pypi/v/ferrisfuzz.svg)](https://pypi.org/project/ferrisfuzz/)
+[![docs.rs](https://img.shields.io/docsrs/ferrisfuzz-core)](https://docs.rs/ferrisfuzz-core)
+
+Fast string similarity metrics — Levenshtein, Damerau (OSA), and
+Jaro-Winkler — for Rust and Python. Pure `no_std` Rust core with zero
+dependencies; bit-parallel single-pair and compile-once batch APIs;
+faster than rapidfuzz-rs in our benchmarks, with Jaro-Winkler semantics
+locked to rapidfuzz and enforced by a hard parity gate on every commit.
+
+## Installation
+
+```
+cargo add ferrisfuzz-core
+```
+pip install ferrisfuzz
+```
+
+
 ## Benchmarks
 
 |  | Rust: single-pair, long, ns | Rust: batch 10k, Melem/s | Python: single-pair, long, ns |

@@ -132,4 +132,9 @@ mod tests {
     fn test_one_empty() {
         assert_eq!(damerau_classic("Test", "", None, None), Ok(4) );
     }
+
+    #[test]
+    fn test_theory() {
+        assert_eq!(damerau_classic("a", "abc", None, None), Ok(2))
+    }
 }

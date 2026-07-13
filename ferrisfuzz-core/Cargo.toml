@@ -1,6 +1,6 @@
 [package]
 name = "ferrisfuzz-core"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Fast no_std string similarity: Levenshtein, OSA, Jaro-Winkler, bit-parallel, zero deps"
 readme = "README.md"
@@ -15,3 +15,4 @@ harness = false
 [dev-dependencies]
 rapidfuzz ="0.5"
 criterion = { version = "0.5.1", features = ["html_reports"]}
+rand = "0.8"

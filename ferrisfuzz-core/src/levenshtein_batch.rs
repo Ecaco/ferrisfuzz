@@ -1,6 +1,7 @@
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
+
 pub struct LevenshteinBatch {
     peq: [u64; 256],
     m: usize,
@@ -58,7 +59,7 @@ impl LevenshteinBatch {
             for &b in target.as_bytes() {
                 let eq = self.peq[b as usize]; 
                 let xh = ((eq & pv).wrapping_add(pv)) ^ pv;
-                let x = xh | eq;
+                let x = xh | eq | mv;
                 let ph = mv | !(x | pv);
                 let mh = pv & x;
                 if ph & mask != 0 { score += 1; }
@@ -98,6 +99,7 @@ pub fn levenshtein_batch(
 mod tests {
     use super::*;
     use crate::levenshtein_bp::levenshtein_bp;
+    use crate::levenshtein::levenshtein_distance_classic;
 
     const QUERY: &str = "kitten";
     const WORDS: &[&str] = &[
@@ -170,5 +172,25 @@ mod tests {
             scorer.distance(&t),
             levenshtein_bp(&q, &t, None, None, None).unwrap()
         );
+    }
+
+    #[test]
+    fn test_theory() {
+        let q = "a".repeat(50);
+        let t = "abc".repeat(50);
+        let scorer = LevenshteinBatch::new(&q, None);
+        assert_eq!(
+            scorer.distance(&t),
+            levenshtein_bp(&q, &t, None, None, None).unwrap()
+        ); 
+    }
+
+    #[test]
+    fn regression_multiword_vs_classic() {
+        let q: String = "abcde".repeat(14);       
+        let t: String = "aebdc".repeat(9);         
+        let fast = levenshtein_bp(&q, &t, None, None, None).unwrap();
+        let classic = levenshtein_distance_classic(&q, &t, None, None).unwrap();
+        assert_eq!(fast, classic, "multiword: fast={fast} classic={classic}");
     }
 }

@@ -133,11 +133,6 @@ fn damerau_bp_multiword(query: &[char], target: &str, m: usize) -> usize {
     let mut ph = vec![0u64; num_words];
     let mut mh = vec![0u64; num_words];
 
-    //    DAMERAU state as VECTORS:
-    //   `x`      — the diagonal, PERSISTED across target chars (Levenshtein threw it
-    //              away each step; Damerau needs the previous step's value).
-    //   `pm_old` — previous target char's match vector.
-    //   `tr`     — scratch for the transposition term.
     let mut x  = vec![0u64; num_words];
     let mut pm_old = vec![0u64; num_words];
     let mut tr = vec![0u64; num_words];
@@ -159,7 +154,7 @@ fn damerau_bp_multiword(query: &[char], target: &str, m: usize) -> usize {
             tr[i]        = shifted & pm_old[i];        
         }
 
-        // Myers horizontal add with carry (identical to Levenshtein).
+        
         let mut carry = 0u64;
         for i in 0..num_words {
             let x_i = eq[i] & pv[i];
@@ -169,7 +164,7 @@ fn damerau_bp_multiword(query: &[char], target: &str, m: usize) -> usize {
             xh[i] = s2 ^ pv[i];
         }
 
-        // Assemble this step's diagonal, then fold in the transposition.
+        
         for i in 0..num_words {
             x[i] = xh[i] | eq[i] | mv[i] | tr[i];  
             ph[i] = mv[i] | !(x[i] | pv[i]);
@@ -214,7 +209,7 @@ fn damerau_bp_small_bytes(query: &[u8], target: &[u8], m: usize) -> usize {
     let mut pm_old: u64 = 0;
 
     for &b in target.iter() {
-        let eq = peq[b as usize]; // single load, no decode, no branch
+        let eq = peq[b as usize]; 
 
         let tr = (((!x) & eq) << 1) & pm_old;
 
@@ -254,7 +249,7 @@ mod tests {
             ("", "abc"), ("abc", ""), ("aa", "aa"),
         ];
     for (a, b) in pairs {
-        let bp = damerau_bp(a, b, None, None, None).unwrap();   // entry fn, not _small
+        let bp = damerau_bp(a, b, None, None, None).unwrap();   
         let classic = damerau_classic(a, b, None, None).unwrap();
         assert_eq!(bp, classic, "mismatch on {a:?}/{b:?}: bp={bp} classic={classic}");
     }
@@ -271,11 +266,16 @@ mod tests {
 
         let base: String = "abcdefghij".repeat(8); // 80 chars
         let mut swapped: Vec<char> = base.chars().collect();
-        swapped.swap(63, 64); // transposition EXACTLY across the word boundary — the danger spot
+        swapped.swap(63, 64); 
         let swapped: String = swapped.into_iter().collect();
         assert_eq!(
             damerau_bp(&base, &swapped, None, None, None).unwrap(),
             damerau_classic(&base, &swapped, None, None).unwrap()
         );
+    }
+
+    #[test]
+    fn test_theory() {
+        assert_eq!(damerau_bp("a", "abc", None, None, None) , Ok(2))
     }
 }

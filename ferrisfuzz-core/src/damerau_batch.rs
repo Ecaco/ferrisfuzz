@@ -104,6 +104,7 @@ pub fn damerau_batch(
 mod tests {
     use super::*;
     use crate::damerau_bp::damerau_bp;
+    use crate::damerau::damerau_classic;
 
     const QUERY: &str = "kitten";
     const WORDS: &[&str] = &[
@@ -149,5 +150,23 @@ mod tests {
         let scorer = DamerauBatch::new(&q, None);
         let t = "a".repeat(70);
         assert_eq!(scorer.distance(&t), damerau_bp(&q, &t, None, None, None).unwrap());
+    }
+
+    #[test]
+    fn test_batch() {
+        let q = "a".repeat(50);
+        let scorer = DamerauBatch::new(&q, None);
+        let t = "abc".repeat(50);
+
+        assert_eq!(scorer.distance(&t), damerau_bp(&q, &t, None, None, None).unwrap())
+    }
+
+    #[test]
+    fn regression_multiword_vs_classic_dm() {
+        let q: String = "abcde".repeat(14);       
+        let t: String = "aebdc".repeat(9);         
+        let fast = damerau_bp(&q, &t, None, None, None).unwrap();
+        let classic = damerau_classic(&q, &t, None, None).unwrap();
+        assert_eq!(fast, classic, "multiword: fast={fast} classic={classic}");
     }
 }

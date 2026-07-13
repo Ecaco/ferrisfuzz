@@ -77,7 +77,7 @@ fn levenshtein_bp_small(query: &[char], target: &str, m: usize) -> usize {
         };
 
         let xh = ((eq & pv).wrapping_add(pv)) ^ pv;
-        let x  = xh | eq;
+        let x  = xh | eq | mv;
         let ph = mv | !(x | pv);
         let mh = pv & x;
         if ph & mask != 0 { score += 1; }
@@ -148,7 +148,8 @@ fn levenshtein_bp_multiword(query: &[char], target: &str, m: usize) -> usize {
         let mut carry_ph = 1u64;
         let mut carry_mh = 0u64;
         for i in 0..num_words {
-            let x_i      = xh[i] | eq[i];
+            let mv_old = mv[i];
+            let x_i      = xh[i] | eq[i] |mv_old;
             let ph_shift = (ph[i] << 1) | carry_ph;
             let mh_shift = (mh[i] << 1) | carry_mh;
             carry_ph     = ph[i] >> 63;
@@ -177,7 +178,7 @@ fn levenshtein_bp_small_bytes(query: &[u8], target: &[u8], m: usize) -> usize {
         let eq = peq[b as usize]; 
  
         let xh = ((eq & pv).wrapping_add(pv)) ^ pv;
-        let x  = xh | eq;
+        let x  = xh | eq | mv;
         let ph = mv | !(x | pv);
         let mh = pv & x;
         if ph & mask != 0 { score += 1; }
@@ -282,5 +283,10 @@ mod tests {
         let classic = levenshtein_distance_classic("café", "cafe", None, None).unwrap();
         assert_eq!(d, classic, "non-ASCII must use the char path");
         assert_eq!(d, 1);
+    }
+
+    #[test] 
+    fn test_theory() {
+        assert_eq!(levenshtein_bp("a", "abc", None, None, None), Ok(2))
     }
 }

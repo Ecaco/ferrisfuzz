@@ -1,6 +1,6 @@
 use ferrisfuzz_core::levenshtein::levenshtein_distance_classic;
 use ferrisfuzz_core::levenshtein_bp::levenshtein_bp;
-use ferrisfuzz_core::levenshtein_batch::{LevenshteinBatch, levenshtein_batch};
+use ferrisfuzz_core::levenshtein_batch::{LevenshteinBatch};
 use ferrisfuzz_core::damerau::damerau_classic;
 use ferrisfuzz_core::damerau_bp::damerau_bp;
 use ferrisfuzz_core::damerau_batch::DamerauBatch;

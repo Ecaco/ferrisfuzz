@@ -1,6 +1,6 @@
 # ferrisfuzz
 
-[![CI](https://github.com/YOURUSER/ferrisfuzz/actions/workflows/ci.yml/badge.svg)](https://github.com/Ecaco/ferrisfuzz/actions/workflows/CI.yml)
+[![CI](https://github.com/Ecaco/ferrisfuzz/actions/workflows/CI.yml/badge.svg)](https://github.com/Ecaco/ferrisfuzz/actions/workflows/CI.yml)
 [![crates.io](https://img.shields.io/crates/v/ferrisfuzz-core.svg)](https://crates.io/crates/ferrisfuzz-core)
 [![PyPI](https://img.shields.io/pypi/v/ferrisfuzz.svg)](https://pypi.org/project/ferrisfuzz/)
 [![docs.rs](https://img.shields.io/docsrs/ferrisfuzz-core)](https://docs.rs/ferrisfuzz-core)
@@ -8,15 +8,14 @@
 Fast string similarity metrics: Levenshtein, Damerau (OSA), and
 Jaro-Winkler. For Rust and Python. Pure `no_std` Rust core with zero
 dependencies; bit-parallel single-pair and compile-once batch APIs;
-faster than rapidfuzz-rs in our benchmarks, with Jaro-Winkler semantics
-locked to rapidfuzz and enforced by a hard parity gate on every commit.
+faster than rapidfuzz-rs in the benchmarks.
 
 ## Installation
 
-```
+```bash
 cargo add ferrisfuzz-core
 ```
-```
+```bash
 pip install ferrisfuzz
 ```
 
@@ -36,42 +35,6 @@ lose, with mechanisms) in [BENCHMARKS.md](BENCHMARKS.md). Per-audience
 detail: [Rust README](ferrisfuzz-core/README.md) ·
 [Python README](py/README.md).*
 
-## How it was built
-
-**Correctness before speed.** The initial implementations were hand-coded,
-non-bit-parallel references following the textbook algorithms, with a
-three-way parity gate against an independent Python oracle and rapidfuzz.
-The bit-parallel implementations were then built against those references,
-with the same gates enforcing correctness on every commit — the references
-and gates are in the repo, and CI runs them on every build.
-
-**Semantics locked to the reference.** A parity gate caught our
-Jaro-Winkler diverging from rapidfuzz on two inputs. The residual on one
-was exactly 1/350 — clean enough to solve backwards: it implied a
-transposition count floored to whole transpositions at m=35 matches.
-rapidfuzz's source confirmed the floor, plus a Winkler boost threshold we
-also lacked. Both were adopted, pinned as named regression tests, and
-agreement with rapidfuzz is now a hard gate on every commit.
-
-**Benchmarks as evidence.** All benchmarks are reproducible with the
-included harnesses, and were pinned to a single P-core to avoid hybrid
-scheduling swings, with every published number verified across two
-baselined runs. `black_box` is applied once at the boundary of each timed
-region, never per-element inside candidate loops — we measured ~0.8ns/call
-of our own instrumentation overhead before fixing this. Methodology and
-full tables, losses included, in [BENCHMARKS.md](BENCHMARKS.md).
-
-**The FFI boundary, measured.** Subtracting core (criterion) times from
-wheel (pytest) times isolates the Python↔Rust boundary cost: ~50–60ns per
-call, flat across input lengths and metrics, replicated across three
-benchmark campaigns. Batch calls ingest candidate lists zero-copy, and
-batches ≥10k candidates release the GIL — verified by a concurrency test
-in the suite.
-
-**Known limits, tracked.** Past ~10k candidates, batch throughput dips
-~30% as the working set leaves cache; boundary probes in the repo isolate
-the mechanism, and chunked ingestion is the designed fix, tracked in the
-roadmap.
 
 ## Roadmap
 
@@ -112,6 +75,6 @@ MIT OR Apache-2.0, at your option.
 
 **Books:**
 - Hyde, *Write Great Code, Volume 2: Thinking Low-Level* — low-level
-  performance reasoning.
+  performance reasoning & bitwise operations.
 - Blandy, Orendorff & Tindall, *Programming Rust: Fast, Safe Systems
   Development.*

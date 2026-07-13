@@ -1,6 +1,6 @@
 # ferrisfuzz
 
-[![CI](https://github.com/Ecaco/ferrisfuzz/actions/workflows/ci.yml/badge.svg)](https://github.com/Ecaco/ferrisfuzz/actions/workflows/ci.yml)
+[![CI](https://github.com/Ecaco/ferrisfuzz/actions/workflows/CI.yml/badge.svg)](https://github.com/Ecaco/ferrisfuzz/actions/workflows/CI.yml)
 [![crates.io](https://img.shields.io/crates/v/ferrisfuzz-core.svg)](https://crates.io/crates/ferrisfuzz-core)
 [![docs.rs](https://img.shields.io/docsrs/ferrisfuzz-core)](https://docs.rs/ferrisfuzz-core)
 [![PyPI](https://img.shields.io/pypi/v/ferrisfuzz.svg)](https://pypi.org/project/ferrisfuzz/)
